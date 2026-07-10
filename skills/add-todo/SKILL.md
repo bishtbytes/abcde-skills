@@ -16,8 +16,8 @@ Name the file with a descriptive kebab-case slug (e.g.
 ## Frontmatter (required — it's what makes the backlog listable)
 
 Begin the doc with a YAML frontmatter block so it can be listed/filtered by
-status, priority, and tag without opening it (schema + allowed values live in
-`docs/todo/README.md` — read it if unsure):
+status, priority, and tag without opening it (the block below **is** the schema —
+fields + allowed values):
 
 ```yaml
 ---
@@ -38,9 +38,7 @@ discussion/spike opener with no decided direction, `blocked` when it waits on op
 and a couple of area `tags` from the work; default `priority: medium` when
 genuinely unsure. Use the real current date for `created` — do NOT hardcode a
 stale one. Omit `kind` (defaults to `task`) and `parent` unless the todo is part
-of an indexed initiative (see **Index todos** below). If the target repo has no
-`docs/todo/README.md`, skip the frontmatter (that repo hasn't adopted the
-schema).
+of an indexed initiative (see **Index todos** below).
 
 Then the body — make it self-contained. Cover, scaled to the task:
 - **Problem / why** — what and why, in a sentence or two.
@@ -104,10 +102,10 @@ land on `develop` right away so other sessions and checkouts pick them up. Three
 hard rules:
 
 - **Refresh `INDEX.md` in the same commit.** After writing the doc, run
-  `node scripts/todo-index.mjs` (skip if the repo has no such script) so the
-  generated `docs/todo/INDEX.md` picks up the new entry from its frontmatter.
-  (The pre-commit hook that normally does this is skipped by the `--no-verify`
-  push below, so regenerate it by hand here.)
+  `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs` — the indexer is **bundled
+  with this skill** (nothing to install in the repo), and it writes the generated
+  `docs/todo/INDEX.md` from every todo's frontmatter. (A pre-commit hook may also
+  do this; regenerate by hand here since the `--no-verify` push below skips it.)
 - **Only the todo doc(s) + the generated `INDEX.md` — nothing else.** Stage with
   explicit pathspecs (`git add docs/todo/<slug>.md docs/todo/INDEX.md`); for an
   indexed initiative add the index todo and any child whose `parent:` you set

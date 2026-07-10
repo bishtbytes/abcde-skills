@@ -66,8 +66,8 @@ the doc's existing structure.
 
 Docs-only change → land it on `develop` immediately so other sessions pick it up:
 
-- Refresh the index in the same commit: `node scripts/todo-index.mjs` (skip if the
-  repo has no such script) — the `status` flip changes the buckets.
+- Refresh the index in the same commit: `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs`
+  (the indexer is bundled with this skill) — the `status` flip changes the buckets.
 - Stage with **explicit pathspecs** only: `git add docs/todo/<slug>.md
   docs/todo/INDEX.md` (add the index todo too if you touched a `parent:`). Never
   `git add -A`.

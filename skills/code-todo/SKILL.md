@@ -70,10 +70,12 @@ If the invocation is bare (`/code-todo` with no target), do NOT
 start a worktree yet. First scan the backlog and get the user to pick
 the batch:
 
-1. **Scan** every todo in `docs/todo/` (fall back to the nearest
-   `docs/` todo dir). Read each one — not just the title — enough to
-   judge its readiness.
-2. **Sort into two lists:**
+1. **List the backlog via `explore-todos`.** Invoke the `explore-todos` skill to
+   get every parked todo grouped by status and sorted by priority — don't
+   re-scan `docs/todo/` by hand here, reuse that skill. Its grouped output is
+   your candidate set. Read the docs behind the ones you'll recommend, not just
+   the titles, so you can judge readiness.
+2. **Layer a build-readiness judgment** on that listing — sort the candidates:
    - **Ready (no discussion needed)** — scope is settled, decisions are
      already made in the doc, it's self-contained, and it's small-to-
      moderate. These can be built as-is.
@@ -244,6 +246,13 @@ user's own dev servers live there). Pick the first FREE TCP port in the
 port as `SITE_PORT=<port>`; that single env var overrides both the dev script's
 default and the e2e config's default (3366), so the whole run stays in the safe
 range.
+
+**NEVER kill a process on an already-in-use port — not ever.** A busy port means
+something else (the user's own dev server, another run, an unrelated service) is
+running there; killing it can destroy their work or state. The rule is
+**skip-and-increment only**: if a port is in use, move to the next one. You free
+ONLY the review server you yourself started, and ONLY at closure (via
+`deliver-todo`, by its recorded port) — never a port you found already occupied.
 
 ### Start the persistent review server (project-specific — only if `scripts/start-dev.sh` exists)
 

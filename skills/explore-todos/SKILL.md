@@ -9,24 +9,26 @@ This is a read-only summary — do NOT implement, edit, delete, or push anything
 
 ## Gather (from frontmatter — the source of truth)
 
-Each todo carries a YAML frontmatter block (schema: `docs/todo/README.md`), and
-`scripts/todo-index.mjs` reads it. Use the script — do NOT hand-infer categories:
+Each todo carries a YAML frontmatter block (the schema `add-todo` writes:
+`status` / `category` / `priority` / `effort` / `tags` / `created`, plus `kind` /
+`parent`). The **bundled** indexer reads it — use the script, do NOT hand-infer
+categories:
 
 1. **Refresh the committed index** so `docs/todo/INDEX.md` reflects the current
    frontmatter (read-only side effect; regenerates a generated file only):
    ```bash
-   node scripts/todo-index.mjs
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs
    ```
 2. **Get the view** — full, or filtered by whatever the user asked for. Filters
    are `status:` / `category:` / `priority:` / `tag:` / `kind:` / `parent:`,
    AND-combined:
    ```bash
-   node scripts/todo-index.mjs --list                       # everything, grouped
-   node scripts/todo-index.mjs --list status:ready          # buildable now
-   node scripts/todo-index.mjs --list status:ready tag:short-story
-   node scripts/todo-index.mjs --list category:bug priority:high
-   node scripts/todo-index.mjs --list kind:index            # just the initiatives
-   node scripts/todo-index.mjs --list parent:online-video-architecture-index  # one initiative's children
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list                       # everything, grouped
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready          # buildable now
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready tag:short-story
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list category:bug priority:high
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list kind:index            # just the initiatives
+   node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list parent:online-video-architecture-index  # one initiative's children
    ```
    With no filter, `docs/todo/INDEX.md` already holds the full view — the
    **Initiatives** section (each `kind: index` todo with its children nested
@@ -36,11 +38,11 @@ Each todo carries a YAML frontmatter block (schema: `docs/todo/README.md`), and
 If the user named a status/tag/category/priority in their request, pass it as a
 filter. Otherwise present the full grouped view.
 
-**Fallback (repo hasn't adopted the schema):** if there's no
-`scripts/todo-index.mjs` / `docs/todo/README.md`, the todos have no frontmatter —
-fall back to listing `docs/todo/*.md` and bucketing each by intent inferred from
-its title + status line (UX, tech-debt, feature, spike/discussion, bug, e2e),
-and mention that adding frontmatter would make this exact.
+**Todos without frontmatter:** the indexer ships with this skill, so it always
+runs — but if a repo's todos carry no frontmatter, its output is sparse. In that
+case fall back to listing `docs/todo/*.md` and bucketing each by intent inferred
+from its title + status line (UX, tech-debt, feature, spike/discussion, bug,
+e2e), and mention that adding frontmatter (per `add-todo`) makes this exact.
 
 ## Present
 
