@@ -67,31 +67,26 @@ pasted a task, said "implement X"), **skip this step** and go straight
 to Step 1 with that task.
 
 If the invocation is bare (`/code-todo` with no target), do NOT
-start a worktree yet. First scan the backlog and get the user to pick
-the batch:
+start a worktree yet. First pull the buildable set and recommend a batch:
 
-1. **List the backlog via `explore-todos`.** Invoke the `explore-todos` skill to
-   get every parked todo grouped by status and sorted by priority — don't
-   re-scan `docs/todo/` by hand here, reuse that skill. Its grouped output is
-   your candidate set. Read the docs behind the ones you'll recommend, not just
-   the titles, so you can judge readiness.
-2. **Layer a build-readiness judgment** on that listing — sort the candidates:
-   - **Ready (no discussion needed)** — scope is settled, decisions are
-     already made in the doc, it's self-contained, and it's small-to-
-     moderate. These can be built as-is.
-   - **Needs discussion / not ready** — anything that is an explicit
-     discussion doc, has open design questions, is a large/standalone
-     refactor or migration better as its own PR, or is e2e/test work
-     (a todo whose deliverable *is* an e2e/spec — heavier, usually its
-     own PR). Note the *reason* it's held back.
-3. **Present both lists** — one line per todo (slug + a few-word what +
-   for held-back items, why). Recommend a concrete "ready" batch
-   (lean small; a 6-item batch is already a chunky PR).
-4. **Recommend a batch — don't touch code yet.** Present both lists with a
-   concrete recommendation, but DON'T take a separate "which items" confirm
-   here. The single begin-confirmation — scope **and** the test & spec impact
-   (unit/integration + e2e + feature specs) — happens next in **Step 1**, the
-   go-ahead gate.
+1. **Get the buildable set from `explore-todos`.** Invoke `explore-todos status:ready`
+   — the `status` frontmatter already *is* the ready-vs-needs-discussion split
+   (`brainstorm-todo` is what flips a todo to `ready` once it's buildable), so
+   don't re-scan or re-sort `docs/todo/` by hand. That filtered list is your
+   candidate set. (Own the inventory question to `explore-todos`; own only the
+   *what-to-build-next* question here.)
+2. **Read the candidate docs** — not just the titles — enough to judge
+   *buildability*, which the frontmatter can't tell you: is each self-contained
+   and small-to-moderate (one worktree, one PR), or is it secretly a
+   large/standalone refactor, a migration, or e2e/test-heavy work better off as
+   its own PR?
+3. **Recommend a small batch — don't touch code yet.** Propose a concrete batch
+   (lean small; a 6-item batch is already a chunky PR). For anything you'd hold
+   back, say why in one line and **route it to the right skill**: a todo with
+   open questions → suggest `/brainstorm-todo` on it first; a too-big one → its
+   own later `code-todo` run. **DON'T take a separate "which items" confirm here**
+   — the single begin-confirmation (scope **and** the test & spec impact) happens
+   next in **Step 1**, the go-ahead gate.
 
 Carry the recommended (or user-adjusted) items into **Step 1** — the test-impact
 + go-ahead gate — which is where the user confirms the scope and starts the run
