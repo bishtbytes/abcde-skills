@@ -1,0 +1,13 @@
+{
+  "name": "abcde-skills",
+  "owner": {
+    "name": "bishtbytes"
+  },
+  "plugins": [
+    {
+      "name": "abcde",
+      "source": "./",
+      "description": "The ABCDE todo workflow for Claude Code — Add · Brainstorm · Code · Deliver · Explore. Spec-driven, worktree-isolated, PR-based shipping built around parked todo docs."
+    }
+  ]
+}
