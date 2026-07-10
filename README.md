@@ -49,6 +49,24 @@ Where a skill touches a truly repo-local helper (e.g. a `scripts/todo-index.mjs`
 
 If your stack or branch model differs, fork and adapt — the skills are readable Markdown; the conventions live at the top of each `SKILL.md`.
 
+## Optional: the backlog index
+
+`explore-todos` (and the `INDEX.md` refresh in `add-todo` / `brainstorm-todo`) get richer when your repo has a small, dependency-free indexer — included here so you can drop it straight in:
+
+- **`scripts/todo-index.mjs`** — scans `docs/todo/*.md` frontmatter and either writes a grouped `docs/todo/INDEX.md` or prints a filtered table (`--list status:ready tag:foo …`). **Node builtins only, no `npm install`.**
+- **`docs/todo/README.md`** — the frontmatter schema (`status` / `category` / `priority` / `effort` / `tags` / `created`, plus `kind` / `parent` for initiatives).
+
+`npx skills add` installs the **skills**, not these repo files — so copy them into your project once:
+
+```bash
+mkdir -p scripts docs/todo
+cp path/to/abcde-skills/scripts/todo-index.mjs scripts/
+cp path/to/abcde-skills/docs/todo/README.md docs/todo/
+node scripts/todo-index.mjs        # writes docs/todo/INDEX.md
+```
+
+Optionally wire `node scripts/todo-index.mjs` into a pre-commit hook so `INDEX.md` stays fresh. **Skip this entirely and the skills still work** — they detect the absent script and fall back to reading `docs/todo/*.md` directly.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
