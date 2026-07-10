@@ -121,21 +121,31 @@ hard rules:
 If the user passed arguments, treat them as the task title/focus and tailor the
 doc accordingly.
 
-## After writing: auto-resolve open questions (chain to brainstorm-todo)
+## After writing: ALWAYS run the gap check (chain to brainstorm-todo)
 
-A parked todo is often captured fast and left half-baked — a scope choice not
-drawn, options weighed but unpicked, an "open questions" / "Decision NOT yet made"
-line, edge cases named but unanswered. Once the doc is written **and pushed**,
-judge whether it still carries any such UNRESOLVED question.
+**Do NOT gate this on your own "looks complete" judgment.** The author of a
+freshly-parked todo is the worst judge of whether it's actually done — a
+self-assessment right after writing reliably misses the vague spots ("a TTL",
+"somehow", "optionally"), the hand-waved failure modes, and the implicit scope
+calls. A *fresh adversarial re-read* catches what the vibe-check glosses, so make
+the check unconditional.
 
-- **Open questions remain** → announce "Open questions remain — invoking
-  brainstorm-todo to resolve them" and **automatically invoke the `brainstorm-todo`
-  skill** on the just-written todo. It interviews the user to resolve them,
-  folds the answers back into the same doc, flips `status` to `ready` when it
-  becomes buildable, and re-pushes.
-- **Fully specified, nothing open** → stop. Don't invoke brainstorm-todo, and
-  don't invent questions to justify a run — a complete, buildable todo needs no
-  brainstorm.
+Once the doc is written **and pushed**, ALWAYS hand off to the `brainstorm-todo`
+skill on the just-written todo — announce "Parked — running the brainstorm gap
+check" and invoke it. brainstorm-todo does the fresh re-read: it enumerates every
+loosely-specified or implicit decision (not just lines you explicitly flagged
+"open"), resolves what it can by exploring the codebase, and interviews the user
+only on the genuine judgment calls. Its own guard handles the already-complete
+case — if the fresh pass truly finds nothing, it says so and stops (it will not
+invent questions). So:
 
-Only chain on a genuine unresolved decision. This is the A→B hand-off in the
-add → brainstorm → code → deliver flow.
+- **Hidden gaps (the common case)** → brainstorm finds them, fills what the code
+  answers, asks the user only the real calls, folds resolutions back in, flips
+  `status` to `ready`, re-pushes.
+- **Genuinely complete** → brainstorm re-reads, finds nothing, stops cheaply.
+
+The check ALWAYS runs; the *interview* only happens when there's something real.
+(The one exception: if the user has explicitly said to defer a question — "leave
+that for now" — honor that; the fresh pass still runs, but you don't press the
+deferred call.) This is the A→B hand-off in the add → brainstorm → code → deliver
+flow.
