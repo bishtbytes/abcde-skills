@@ -153,28 +153,42 @@ succeeded; this is a bonus, so a decline costs nothing.
    and ask whether to build it. Nothing in scope / no scanner / user declines →
    say so; you're done.
 
-3. **Build it (only on yes).** Work in the **main checkout** off the now-current
-   develop, **NOT a worktree**: the deliverable IS the `.betterer.results`
-   baseline, and `pnpm betterer` serializes cwd-relative plugin paths, so from a
-   worktree (a deeper dir) the regenerated baseline won't match CI / the main
-   checkout (betterer's worktree-depth trap). The feature worktree is already torn
-   down (step 6) and the main checkout is already on a current develop (step 8),
-   so this is a natural continuation.
+3. **Build it (only on yes).** Build in an **isolated worktree off develop**
+   (like code-todo — isolation; never build in the main checkout, whose running
+   dev server / uncommitted work you'd otherwise risk), set up via
+   `./scripts/start-dev.sh`:
    ```bash
-   git -C <main> checkout -b feat/<slug>-techdebt develop
+   git worktree add .worktrees/<slug>-techdebt -b feat/<slug>-techdebt develop
    # … apply each increment: behavior-preserving git mv / extract / simplify,
    #    ONE reviewable slice per file/folder, no logic changes riding along …
-   pnpm betterer        # lowers the baseline; commit the updated .betterer.results
    ```
-   Gates before pushing: the live push gates (tsc ratchet + `pnpm arch` +
-   `vitest run`) AND `pnpm betterer:ci` green — betterer is no longer a pre-push
-   gate, so verify it by hand here, from the main checkout.
+   Gates from the worktree: the live push gates (tsc ratchet + `pnpm arch` +
+   `vitest run`).
 
-4. **Open the PR + restore.** `git -C <main> push -u origin feat/<slug>-techdebt`,
-   then `gh pr create --base develop --title "Tech debt: <what>"` with a body
-   listing each increment + the betterer baseline drop. Switch the main checkout
-   back to develop (`git -C <main> checkout develop`). The user reviews/merges;
-   stop here (don't auto-merge this one).
+   **`.betterer.results` is the ONE depth-sensitive artifact — the sole reason
+   this step ever wanted the main checkout.** `pnpm betterer` serializes
+   cwd-relative paths, so regenerating it from a deeper worktree dir MANGLES the
+   file (symptom: `/`-in-strings rewritten to stacked `../../..`, depth = cwd
+   depth) and CI / the main checkout then won't match it (the worktree-depth
+   trap). The build itself is depth-agnostic (result KEYS are project-root
+   relative), so only the regen is fenced to the main checkout:
+   - **First run `pnpm betterer:ci` from the MAIN checkout on develop.** If it's
+     already **red / broken** (alpha CLI erroring, or an already-corrupted
+     baseline), do NOT regenerate: ship the refactor from the worktree, note in
+     the PR that betterer was skipped, and if the baseline is corrupted, flag
+     fixing it as its own task.
+   - If it's **green** and you're lowering it, run that **single** `pnpm betterer`
+     + commit the `.betterer.results` **from the main checkout** (never a
+     worktree — the depth trap), then confirm `pnpm betterer:ci` green. betterer
+     is not a pre-push gate, so this hand-verify is the only check on it.
+
+4. **Open the PR + clean up.** From the worktree,
+   `git push -u origin feat/<slug>-techdebt`, then
+   `gh pr create --base develop --title "Tech debt: <what>"` with a body listing
+   each increment (+ the betterer baseline drop when one happened, else the
+   one-line reason it was skipped). Leave the worktree in place for review
+   (remove it after the PR merges). The user reviews/merges; stop here (don't
+   auto-merge this one).
 
 ## Defaults & guards
 
