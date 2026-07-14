@@ -1,6 +1,6 @@
 ---
 name: code-todo
-description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across four artifacts — unit/integration (vitest), e2e, the living feature specs in docs/features/, and behavioral contracts — naming which existing ones need updating, where new ones are warranted, or no change (with why); when an e2e run is warranted it ALSO asks up front, at the same gate, for permission to run it as the last step, so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, the approved e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
+description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across five artifacts — unit/integration (vitest), e2e, the living feature specs in docs/features/, behavioral contracts, and applicable diagrams in docs/diagrams/ — naming which existing ones need updating, where new ones are warranted, or no change (with why); when an e2e run is warranted it ALSO asks up front, at the same gate, for permission to run it as the last step, so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, the approved e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
 ---
 
 # code-todo
@@ -186,7 +186,24 @@ above, then classify:
 - **No contract impact** — say WHY (pure refactor behind green contract tests,
   UI copy, docs/data only).
 
-**Present ALL FOUR assessments — plus, for a bare invocation, the batch you're
+### Diagrams (`docs/diagrams/`)
+
+`docs/diagrams/{architecture,sequence,flowchart}/<slug>.svg` hold hand-authored
+**SVG** diagrams (Claude writes the SVG directly, as the `article-diagram` skill
+does). Work out whether the todo's change is worth a picture and classify:
+
+- **Warrants a new diagram** — the change is one a diagram explains faster than
+  prose. Pick the type by what it shows: cross-subsystem wiring or data-flow →
+  `architecture/`; a multi-actor request / async flow → `sequence/`; branching
+  logic or a state machine → `flowchart/`. Name the file + type.
+- **Updates an existing diagram** — the todo changes a flow/structure an existing
+  `docs/diagrams/**/<slug>.md` already draws. Name it and what shifts. *This is
+  the case that silently outdates a diagram.*
+- **No diagram** — the change isn't structural/flow-ish (UI copy, a tiny fix,
+  data only), or an existing diagram still holds. Say WHY, so "no diagram" is a
+  recorded decision, not an oversight.
+
+**Present ALL FIVE assessments — plus, for a bare invocation, the batch you're
 about to build, and (when an e2e run is warranted) the up-front ask to run it as
 the last step — and WAIT for the user's go-ahead before touching code.** Their
 go-ahead authorizes the WHOLE run including the approved e2e; don't start the
@@ -312,6 +329,19 @@ in the same branch. These are living docs — keep them current with the code:
 - A new spec's `invariants` section must not be left out — "none yet" is a
   valid entry; absence isn't.
 
+**Author/update the diagram(s) identified in Step 1** (`docs/diagrams/`), in the
+same commit as the feature spec:
+
+- Write a hand-authored `.svg` under the type subfolder (`architecture/` |
+  `sequence/` | `flowchart/`) — self-contained (inline everything, no external
+  refs/fonts) with a `viewBox` for crisp scaling. Keep it legible: generous
+  spacing, no overlapping boxes/arrows, text kept inside its box.
+- **Link it from the feature spec** (`See docs/diagrams/<type>/<slug>.svg`)
+  rather than embedding — one home per diagram, so it can't drift in two places.
+- **Updating** an existing one → edit the SVG to match what you built; don't
+  redraw what's still accurate.
+- Verify the linked path resolves and the SVG opens as a valid image.
+
 **Write the CONTRACT tests identified in Step 1** per the repo convention
 (repo CLAUDE.md "Contract tests"): `describe("CONTRACT: <the agreement in
 plain words>", …)`, placed FIRST in the test file (right after mocks/imports/
@@ -423,12 +453,17 @@ Always include in the PR body:
   as the hero image,
 - the verification states (in-progress, final, failure) — tables of
   2–3 images per row read well,
-- the **Step-1 assessment table** — one row per todo × the four artifacts
-  (unit/integration, e2e, feature spec, contracts), each cell the
+- the **Step-1 assessment table** — one row per todo × the five artifacts
+  (unit/integration, e2e, feature spec, contracts, diagram), each cell the
   classification + its one-line why, INCLUDING the "no change because …"
   reasons. This is the durable record of what was deliberately tested,
   documented, and skipped — months later the PR itself answers "why is
   there no e2e for this?",
+- **any diagram authored/updated this run — attached as an image** in the PR
+  body: render the `.svg` to PNG (the `article-diagram` / capture Playwright
+  path) and push it into the same secret gist as the screenshots, since inline
+  SVG doesn't render in a private-repo PR description (the committed `.svg` still
+  shows in the "Files changed" tab). A one-liner "no diagram — <why>" when none,
 - gates summary (tsc delta vs develop, vitest count, eslint),
 - the e2e result, per Step 6 — when a run happened, as a **`## E2E` status
   table**: one row per spec (`<spec>.spec.ts` → ✅/❌ + a short note, e.g. which
