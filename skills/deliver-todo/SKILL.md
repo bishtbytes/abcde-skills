@@ -144,7 +144,23 @@ succeeded; this is a bonus, so a decline costs nothing.
    node scripts/debt-report.mjs --paths <touched files> --top 10 --json
    ```
    It scores each file/folder by hotspot (severity × recent churn) against the
-   betterer baselines (file-size / complexity / layer-boundary).
+   betterer baselines (file-size / complexity / layer-boundary) AND — when knip is
+   wired — each file's unused exports/types, so "delete N unused exports" shows up
+   as a ranked increment on the touched surface.
+
+   **Whole-repo dead-code delta (only if `scripts/knip/ratchet.mjs` ships; skip
+   silently otherwise).** Touched-file ranking above is blind to the commonest
+   dead code a feature creates: an export goes dead because the feature deleted
+   its *last consumer* in a DIFFERENT file. Catch it by running the ratchet
+   whole-repo from `<main>` on develop now that the merge has landed:
+   ```bash
+   node scripts/knip/ratchet.mjs --check   # fails + lists NEW dead exports/types vs baseline
+   ```
+   Any entries it prints are symbols this feature orphaned *anywhere* in the tree
+   — fold them into the proposal below as their own increment ("this PR left
+   `<name>` dead in `<file>` — delete"). (A plain `node scripts/knip/ratchet.mjs`
+   run also auto-lowers the baseline when the feature REMOVED dead code — commit
+   the lowered `scripts/knip/baseline.json` with the tech-debt PR.)
 
 2. **Propose a bounded batch and ASK.** Present the top 1–3 files worth chipping,
    each with ONE concrete, behavior-preserving increment — the *next coherent
