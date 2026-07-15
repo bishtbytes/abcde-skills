@@ -47,19 +47,27 @@ cat path/to/abcde-skills/CONVENTIONS.md >> CLAUDE.md   # then review/trim
 
 Skip even that and the skills still function — they just point at conventions your repo may not have documented. See [`CONVENTIONS.md`](./CONVENTIONS.md).
 
-## What this assumes (adopt the workflow, not just the skills)
+## Prerequisites
 
-These skills are **opinionated** — they encode a specific shipping discipline, not a generic todo list. Installing them means adopting that workflow. They assume a repo that uses:
+### Required
 
-- A **`develop` integration branch**, with feature work in **git worktrees** and PRs opened against `develop` (only `main` protected, changed via a `develop → main` release PR).
-- A **`docs/todo/`** backlog of frontmatter'd todo docs, and **`docs/features/`** living feature specs kept in lockstep with the code.
-- Behavioral **CONTRACT tests** (a `describe("CONTRACT: …")` convention) asserting agreed invariants.
-- A JS/TS stack with **quality gates** — a `tsc` ratchet, an import/architecture check, and a test suite — run before a push.
-- A gitignored **`zzz/`** scratch dir for verification artifacts (screenshots, etc.).
+| Requirement | Why | Setup |
+|---|---|---|
+| **GitHub + `gh`, signed in** | PRs, tags, gists | `brew install gh` → `gh auth login` (repo on GitHub) |
+| **A `develop` branch** | worktrees + PRs target it | `git switch -c develop && git push -u origin develop` |
+| **The `capture` skill** | `code-todo` screenshots + diagrams | install separately — not bundled |
+| **A JS/TS toolchain** | the `code-todo` gates | `node` + `tsc` / `eslint` / `vitest` |
+| **A Unix shell** | `lsof` / `curl` / `trash` | macOS or Linux (Windows → WSL) |
 
-The backlog **indexer ships bundled** with the skills (run from `${CLAUDE_SKILL_DIR}`), so it's always available — no repo-local helper to install. Where a skill would otherwise touch something your repo lacks (e.g. the `docs/features/` specs, or the conventions above), it **degrades gracefully** rather than erroring — so the skills work in a plain repo too, just with fewer niceties.
+### Optional (degrades gracefully — skipped with a note if absent)
 
-If your stack or branch model differs, fork and adapt — the skills are readable Markdown; the conventions live at the top of each `SKILL.md`, and in [`CONVENTIONS.md`](./CONVENTIONS.md).
+- **Repo scripts** — `scripts/start-dev.sh`, `scripts/debt-report.mjs`, `scripts/knip/ratchet.mjs`.
+- **Repo conventions** — `docs/todo/`, `docs/features/`, `docs/diagrams/`, `CONTRACT:` tests, a pre-push hook, `zzz/`.
+- **Backlog indexer** — bundled with the skills; nothing to install.
+
+## Adopt the workflow, not just the skills
+
+These skills are **opinionated** — a worktree per feature, todo docs as specs, living feature specs, `CONTRACT:` tests, gates before every push. Details at the top of each `SKILL.md` and in [`CONVENTIONS.md`](./CONVENTIONS.md); if your stack or branch model differs, fork and adapt.
 
 ## License
 
