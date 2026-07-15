@@ -77,8 +77,7 @@ An index todo:
   `created`) describes the initiative as a whole; `category` / `effort` are
   optional on an index. It carries **no `parent`** (an index is the top).
 - Is named **`<initiative>-index.md`** (e.g. `online-video-architecture-index.md`)
-  — obvious at a glance. (This is distinct from the auto-generated `INDEX.md`
-  backlog listing below; that one is machine-written, an index todo is hand-written.)
+  — obvious at a glance.
 - Holds ONLY: a 1–2 sentence **goal**, and a **linked, ordered list of the child
   todos** — each `[[child-slug]]` + a one-line what + its status — plus overall
   status at a glance. **Nothing else** — no Problem / Scope / Behavior / Inventory
@@ -96,22 +95,17 @@ change — commit + push it the same way as any todo (below), staging **every**
 touched doc (the index + any child whose `parent:` you set) with explicit
 pathspecs.
 
-Regenerate the index, then commit the doc, then **push it immediately** — this
-**overrides the global "don't push" Push Rule**, because todo docs are meant to
-land on `develop` right away so other sessions and checkouts pick them up. Three
-hard rules:
+Commit the doc, then **push it immediately** — this **overrides the global
+"don't push" Push Rule**, because todo docs are meant to land on `develop` right
+away so other sessions and checkouts pick them up. Two hard rules:
 
-- **Refresh `INDEX.md` in the same commit.** After writing the doc, run
-  `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs` — the indexer is **bundled
-  with this skill** (nothing to install in the repo), and it writes the generated
-  `docs/todo/INDEX.md` from every todo's frontmatter. (A pre-commit hook may also
-  do this; regenerate by hand here since the `--no-verify` push below skips it.)
-- **Only the todo doc(s) + the generated `INDEX.md` — nothing else.** Stage with
-  explicit pathspecs (`git add docs/todo/<slug>.md docs/todo/INDEX.md`); for an
-  indexed initiative add the index todo and any child whose `parent:` you set
-  (`git add docs/todo/<initiative>-index.md docs/todo/<child>.md`). Never
-  `git add -A` / `git commit -a`. The working tree often carries unrelated
-  in-progress edits (authoring files, logs) that must NOT ride along.
+- **Only the todo doc(s) — nothing else.** Stage with explicit pathspecs
+  (`git add docs/todo/<slug>.md`); for an indexed initiative add the index todo
+  and any child whose `parent:` you set (`git add docs/todo/<initiative>-index.md
+  docs/todo/<child>.md`). Never `git add -A` / `git commit -a`. The working tree
+  often carries unrelated in-progress edits (authoring files, logs) that must NOT
+  ride along. (There's no generated index to stage — the backlog view is printed
+  on demand, not a committed file.)
 - **`git push --no-verify origin develop`** — it's a docs-only change, so skip
   the pre-push gates. (`develop` is the integration branch; a direct push is
   allowed by repo policy.) If the push is rejected as non-fast-forward (someone

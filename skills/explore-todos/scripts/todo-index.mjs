@@ -1,31 +1,36 @@
 #!/usr/bin/env node
 /**
- * scripts/todo-index.mjs — the todo metadata reader.
+ * scripts/todo-index.mjs — the todo backlog reader.
  *
  * Scans every `docs/todo/*.md` for its YAML frontmatter (status / category /
- * priority / effort / tags / created — see docs/todo/README.md) and either:
+ * priority / effort / tags / created — see docs/todo/README.md) and prints a
+ * view to stdout. It is READ-ONLY: it never writes a file, so it is safe to run
+ * concurrently from any number of sessions.
  *
- *   node scripts/todo-index.mjs            → (re)write docs/todo/INDEX.md
- *   node scripts/todo-index.mjs --list …   → print a filtered table to stdout
+ *   node scripts/todo-index.mjs               → full grouped view (Initiatives +
+ *                                                status buckets, sorted by priority)
+ *   node scripts/todo-index.mjs --list        → same full grouped view
+ *   node scripts/todo-index.mjs --list <f>…   → flat table filtered by <f>
  *
- * The INDEX.md write is the committed, GitHub-browsable view; the --list mode
- * backs the /explore-todos skill and quick CLI lookups. Frontmatter is the
- * single source of truth — this script only ever READS the todos and writes the
- * derived INDEX. It never throws on a malformed/frontmatter-less todo: those are
- * surfaced in an "unclassified" bucket so a bad file can't wedge the index (or a
- * commit, when run from the pre-commit hook).
+ * The grouped view is what the old committed `INDEX.md` used to hold; it is now
+ * generated on demand instead of stored — so there is no derived file to keep in
+ * sync and no cross-session write race. It backs the /explore-todos skill and
+ * quick CLI lookups. Frontmatter is the single source of truth — this script
+ * only ever READS the todos. It never throws on a malformed/frontmatter-less
+ * todo: those are surfaced in an "unclassified" bucket so a bad file can't wedge
+ * the listing.
  *
  * Filters (repeatable, AND-combined) for --list:
- *   status:<s>  category:<c>  priority:<p>  tag:<t>
+ *   status:<s>  category:<c>  priority:<p>  tag:<t>  kind:<k>  parent:<slug>
  *   e.g.  node scripts/todo-index.mjs --list status:ready tag:short-story
  */
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const TODO_DIR = path.join(ROOT, "docs", "todo");
-const INDEX = path.join(TODO_DIR, "INDEX.md");
+// Resolve against the repo the skill is invoked FROM (cwd), not the script's own
+// bundled location — the indexer ships inside the skill and is run from the
+// user's project as `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs`.
+const TODO_DIR = path.join(process.cwd(), "docs", "todo");
 
 const STATUS_ORDER = ["ready", "needs-discussion", "blocked"];
 const STATUS_LABEL = {
@@ -62,7 +67,16 @@ function parseFrontmatter(raw) {
 }
 
 function loadTodos() {
-  const files = readdirSync(TODO_DIR)
+  let entries;
+  try {
+    entries = readdirSync(TODO_DIR);
+  } catch (err) {
+    // No docs/todo/ in this repo → an empty backlog, not a crash. The renderers
+    // print the plain "empty or missing" message (per SKILL.md).
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+  const files = entries
     .filter((f) => f.endsWith(".md") && f !== "INDEX.md" && f !== "README.md")
     .sort();
   return files.map((file) => {
@@ -180,7 +194,9 @@ function renderGroups(items) {
   return parts.join("\n");
 }
 
-function writeIndex(items) {
+/** The full grouped view (Initiatives + status buckets), printed to stdout.
+ *  This is what the old committed INDEX.md held — now generated on demand. */
+function renderFull(items) {
   // Index todos are meta (they group children) — surfaced in their own
   // Initiatives section and kept OUT of the status buckets + the open-todo count.
   const indexes = items.filter((i) => i.kind === "index");
@@ -191,44 +207,32 @@ function writeIndex(items) {
     return `${STATUS_LABEL[s]}: ${n}`;
   }).join(" · ");
   const initiativeNote = indexes.length ? ` · Initiatives: ${indexes.length}` : "";
-  const header = [
-    "# Todo index",
-    "",
-    "> **Auto-generated — do not edit by hand.** Regenerated from each todo's",
-    "> frontmatter by `scripts/todo-index.mjs` (via the pre-commit hook and the",
-    "> `add-todo` / `explore-todos` skills). Edit a todo's frontmatter, not",
-    "> this file. Schema: [README.md](./README.md).",
-    "",
-    `**${total} open todos** — ${counts}${initiativeNote}`,
-    "",
-  ].join("\n");
+  const header = `# Todos — ${total} open · ${counts}${initiativeNote}\n`;
   const initiatives = renderInitiatives(indexes, items);
-  writeFileSync(
-    INDEX,
+  process.stdout.write(
     header + "\n" + (initiatives ? initiatives + "\n" : "") + renderGroups(tasks) + "\n",
-  );
-  process.stderr.write(
-    `todo-index: wrote ${INDEX} (${total} todos, ${indexes.length} initiatives)\n`,
   );
 }
 
 function printList(items, filters) {
   const filtered = items.filter((i) => matchesFilters(i, filters)).sort(sortItems);
+  const label = filters.map((f) => `${f.key}:${f.value}`).join(" ");
   if (!filtered.length) {
-    process.stdout.write("No todos match.\n");
+    process.stdout.write(`No todos match — ${label}\n`);
     return;
   }
-  const label = filters.length
-    ? filters.map((f) => `${f.key}:${f.value}`).join(" ")
-    : "all";
   process.stdout.write(`# Todos — ${label} (${filtered.length})\n\n${TABLE_HEAD}\n`);
   process.stdout.write(filtered.map(row).join("\n") + "\n");
 }
 
 const args = process.argv.slice(2);
 const items = loadTodos();
-if (args[0] === "--list") {
-  printList(items, parseFilters(args.slice(1)));
+// `--list` with filters → flat filtered table; anything else (bare invocation
+// or `--list` with no filters) → the full grouped view. No file is ever written.
+const filterArgs = args[0] === "--list" ? args.slice(1) : args;
+const filters = parseFilters(filterArgs);
+if (filters.length) {
+  printList(items, filters);
 } else {
-  writeIndex(items);
+  renderFull(items);
 }
