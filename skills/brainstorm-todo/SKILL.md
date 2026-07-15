@@ -66,11 +66,9 @@ the doc's existing structure.
 
 Docs-only change → land it on `develop` immediately so other sessions pick it up:
 
-- Refresh the index in the same commit: `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs`
-  (the indexer is bundled with this skill) — the `status` flip changes the buckets.
-- Stage with **explicit pathspecs** only: `git add docs/todo/<slug>.md
-  docs/todo/INDEX.md` (add the index todo too if you touched a `parent:`). Never
-  `git add -A`.
+- Stage with **explicit pathspecs** only: `git add docs/todo/<slug>.md` (add the
+  index todo too if you touched a `parent:`). Never `git add -A`. (No generated
+  index to stage — the backlog view is printed on demand, not committed.)
 - `git push --no-verify origin develop`. If rejected non-fast-forward, pull
   `develop` first (preserving uncommitted work per the repo's git-sync hygiene),
   then re-push.
