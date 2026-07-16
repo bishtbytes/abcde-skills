@@ -55,7 +55,7 @@ Skip even that and the skills still function — they just point at conventions 
 |---|---|---|
 | **GitHub + `gh`, signed in** | PRs, tags, gists | `brew install gh` → `gh auth login` (repo on GitHub) |
 | **A `develop` branch** | worktrees + PRs target it | `git switch -c develop && git push -u origin develop` |
-| **The `capture` skill** | `code-todo` screenshots + diagrams | install separately — not bundled |
+| **The [`capture`](https://github.com/bishtbytes/capture) skill** | `code-todo` screenshots + diagrams | `npx skills add bishtbytes/capture -g -a claude-code` |
 | **A JS/TS toolchain** | the `code-todo` gates | `node` + `tsc` / `eslint` / `vitest` |
 | **A Unix shell** | `lsof` / `curl` / `trash` | macOS or Linux (Windows → WSL) |
 
