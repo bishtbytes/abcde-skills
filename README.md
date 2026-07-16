@@ -1,5 +1,7 @@
 # ABCDE Skills
 
+**The ABCDE of agent-driven development.**
+
 A five-skill **todo lifecycle** for [Claude Code](https://claude.com/claude-code): park a task, sharpen it, build it in isolation, ship it as a reviewed PR, and browse the backlog — each stage its own skill.
 
 > **A**dd · **B**rainstorm · **C**ode · **D**eliver · **E**xplore
