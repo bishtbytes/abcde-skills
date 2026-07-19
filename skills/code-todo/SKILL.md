@@ -354,10 +354,19 @@ relevant state (before/after, in-progress, failure) against the
 **persistent review server already running from Step 2** (reuse its
 recorded port — don't spawn a second). If Step 2 was skipped (no
 `scripts/start-dev.sh`), start one now on a free port. Drive the UI with
-Playwright using the installed tooling or the repository's dependencies:
+Playwright. Prefer the repository's dependencies. In Claude Code, if the repo
+does not provide Playwright and the capture skill is installed, retain its
+bundled fallback; in Codex, use its browser tooling instead of assuming a
+repo-local module:
 
 ```bash
-node <script>.cjs
+if node -e "require.resolve('playwright')" >/dev/null 2>&1; then
+  node <script>.cjs
+elif [ -d "$HOME/.claude/skills/capture/node_modules" ]; then
+  NODE_PATH="$HOME/.claude/skills/capture/node_modules" node <script>.cjs
+else
+  printf '%s\n' 'No Playwright dependency found; use Codex browser tooling or install Playwright.' >&2
+fi
 ```
 
 **OUTPUT_DIR rule:** all screenshots and other temporary artifacts go
