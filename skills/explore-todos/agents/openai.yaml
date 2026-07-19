@@ -1,4 +1,0 @@
-interface:
-  display_name: "Explore Todos"
-  short_description: "Browse and filter the parked todo backlog"
-  default_prompt: "Use $explore-todos to show the ready todos in this repository."

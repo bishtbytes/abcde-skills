@@ -1,4 +1,0 @@
-interface:
-  display_name: "Brainstorm Todo"
-  short_description: "Resolve a parked todo's open decisions"
-  default_prompt: "Use $brainstorm-todo to resolve the open questions in this todo."
