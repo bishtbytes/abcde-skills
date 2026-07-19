@@ -1,7 +1,6 @@
 ---
 name: add-todo
 description: Use when parking a task or future work as a self-contained todo doc in the repo for later cold pickup. Triggers on "park this", "add to todo", "save this for later", "/add-todo".
-argument-hint: "Title or focus of the parked task"
 ---
 
 Write a self-contained todo document capturing a parked task or future work so

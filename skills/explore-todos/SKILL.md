@@ -18,12 +18,13 @@ filters are `status:` / `category:` / `priority:` / `tag:` / `kind:` / `parent:`
 AND-combined:
 
 ```bash
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs                              # everything, grouped
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready          # buildable now
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready tag:short-story
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list category:bug priority:high
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list kind:index            # just the initiatives
-node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list parent:online-video-architecture-index  # one initiative's children
+TODO_INDEXER="${CLAUDE_SKILL_DIR:-${CODEX_HOME:-$HOME/.codex}/skills/explore-todos}/scripts/todo-index.mjs"
+node "$TODO_INDEXER"                                                         # everything, grouped
+node "$TODO_INDEXER" --list status:ready                                     # buildable now
+node "$TODO_INDEXER" --list status:ready tag:short-story
+node "$TODO_INDEXER" --list category:bug priority:high
+node "$TODO_INDEXER" --list kind:index                                      # just the initiatives
+node "$TODO_INDEXER" --list parent:online-video-architecture-index          # one initiative's children
 ```
 
 With no filter the script prints the full view — the **Initiatives** section

@@ -169,7 +169,7 @@ touches and classify:
 A **contract** is a behavior the user explicitly agreed on ("identity edits
 always take effect on regenerate"), protected by a **CONTRACT test** — a test
 whose `describe` name states the agreement in plain words, placed FIRST in its
-test file (see the repo CLAUDE.md "Contract tests" section for the convention).
+test file (see the repository instructions' "Contract tests" section for the convention).
 Read the `invariants` section of each feature spec named in the assessment
 above, then classify:
 
@@ -189,8 +189,8 @@ above, then classify:
 ### Diagrams (`docs/diagrams/`)
 
 `docs/diagrams/{architecture,sequence,flowchart}/<slug>.svg` hold hand-authored
-**SVG** diagrams (Claude writes the SVG directly, as the `article-diagram` skill
-does). Work out whether the todo's change is worth a picture and classify:
+**SVG** diagrams are hand-authored. Work out whether the todo's change is worth
+a picture and classify:
 
 - **Warrants a new diagram** — the change is one a diagram explains faster than
   prose. Pick the type by what it shows: cross-subsystem wiring or data-flow →
@@ -230,21 +230,10 @@ e.g. `todo-sweep`):
 git worktree add .worktrees/<slug> -b feat/<slug> develop
 ```
 
-**Rename the session to this run's slug (do this first).** Derive a session
-name from the todo/task — **≤ 4 words, all lowercase, hyphen-joined** (reuse the
-same `<slug>` you picked for the worktree/branch, e.g. `edit-frames-interactions`).
-Then rename the current Claude Code session to it: **attempt `/rename <slug>`
-directly; if your harness can't invoke a built-in slash command (the common
-case — the model has no tool for built-ins and plain output text isn't
-executed), fall back to printing the exact line for the user to run:**
-
-```
-/rename <slug>
-```
-
-This is best-effort — it auto-renames on any harness that lets the model emit
-the command, and otherwise surfaces a one-tap line. Don't block the run on it;
-proceed regardless of which path fired.
+**Name the run consistently.** Derive a slug from the todo/task — **≤ 4 words,
+all lowercase, hyphen-joined** — and reuse it for the worktree and branch (for
+example, `edit-frames-interactions`). If the active client offers task renaming,
+rename it to the slug; this is best-effort and must not block the work.
 
 Inside the worktree, `./scripts/start-dev.sh` is the self-healing
 preflight + dev server (installs deps, copies `.env.local`, fixes the
@@ -294,7 +283,7 @@ a DIFFERENT port for it. Kill the review server ONLY at `deliver-todo`.
 
 ## 3. Implement
 
-Implement the task(s) per the spec/todo. Follow repo CLAUDE.md
+Implement the task(s) per the spec/todo. Follow the repository instructions
 (commit format, no temporary artifacts in git).
 
 **Retire the todo file in the same commit that finishes it.** A todo's
@@ -343,7 +332,7 @@ same commit as the feature spec:
 - Verify the linked path resolves and the SVG opens as a valid image.
 
 **Write the CONTRACT tests identified in Step 1** per the repo convention
-(repo CLAUDE.md "Contract tests"): `describe("CONTRACT: <the agreement in
+(repository instructions' "Contract tests" section): `describe("CONTRACT: <the agreement in
 plain words>", …)`, placed FIRST in the test file (right after mocks/imports/
 fixtures, before any other describe), asserting through the public seam. Add
 each contract to its feature spec's invariants section with the test path.
@@ -365,17 +354,17 @@ relevant state (before/after, in-progress, failure) against the
 **persistent review server already running from Step 2** (reuse its
 recorded port — don't spawn a second). If Step 2 was skipped (no
 `scripts/start-dev.sh`), start one now on a free port. Drive the UI with
-Playwright from the capture skill's node_modules:
+Playwright using the installed tooling or the repository's dependencies:
 
 ```bash
-NODE_PATH="$HOME/.claude/skills/capture/node_modules" node <script>.cjs
+node <script>.cjs
 ```
 
 **OUTPUT_DIR rule:** all screenshots and other temporary artifacts go
 under the repo-root `zzz/` directory (gitignored) — e.g.
 `zzz/screenshots/<topic>/` in the MAIN checkout so they survive
-worktree teardown. NEVER commit them (see CLAUDE.md "Temporary
-Artifacts").
+worktree teardown. NEVER commit them (see the repository instructions'
+"Temporary artifacts" section).
 
 Revert any content side-effects the live test left in the worktree
 (story.json edits, `*-status.json` files) before committing, and stop

@@ -1,9 +1,9 @@
 # Conventions these skills assume
 
 The ABCDE skills reference a handful of repo conventions (e.g. `code-todo` says
-*"see the repo CLAUDE.md 'Contract tests' section"*). Those live in **your repo's
-`CLAUDE.md`** (or `AGENTS.md`). **Merge the sections below into your `CLAUDE.md`
-once** so every `see the repo CLAUDE.md "…"` reference in the skills resolves.
+*"see the repository instructions' Contract tests section"*). Those live in
+**your repo's `AGENTS.md`** for Codex or `CLAUDE.md` for Claude Code. Merge the
+sections below into the applicable instruction file once.
 
 Nothing here is JS/TS-specific except where noted — swap in your stack's
 equivalent (test runner, type checker, arch/lint check).

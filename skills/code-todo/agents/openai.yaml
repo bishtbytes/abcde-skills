@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Todo"
+  short_description: "Implement a todo in a reviewable PR"
+  default_prompt: "Use $code-todo to assess and implement this ready todo."

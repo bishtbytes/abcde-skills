@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deliver Todo"
+  short_description: "Merge and clean up a completed todo PR"
+  default_prompt: "Use $deliver-todo to merge and clean up this completed PR."

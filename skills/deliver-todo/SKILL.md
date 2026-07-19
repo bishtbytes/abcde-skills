@@ -1,7 +1,6 @@
 ---
 name: deliver-todo
 description: Use when a feature branch's work is done and the user wants it merged to develop via its PR, then tagged (pr-<NUM>-<slug>, marking when the PR merged and what it was about) and the worktree + branch fully cleaned up (local AND origin) and local develop pulled. The closer counterpart to code-todo. After the merge it also offers (only on an explicit yes) a follow-up tech-debt PR that chips at the debt on the just-merged feature's touched files — this is the one place tech-debt cleanup runs, now removed from code-todo. Triggers on "/deliver-todo", "close this out", "finish and clean up", "merge and clean up the branch". DISTINCT from worktree-end, which does a LOCAL ff-merge with no PR, no origin-branch delete, and no develop pull.
-argument-hint: "(optional) the branch/PR to close — defaults to the current worktree's branch"
 ---
 
 # deliver-todo — merge the PR to develop, then clean up
@@ -28,7 +27,7 @@ or delete, `develop`/`main`.
    passed arg); `wt = current worktree path`; base = `develop`. If `branch` is
    `develop`/`main` → STOP ("nothing to close — run this from the feature
    worktree"). Note the main checkout path (`git worktree list`, the non-bare
-   non-`.worktrees`/`.claude/worktrees` entry).
+   non-`.worktrees`/tool-managed-worktree entry).
 
 2. **Push unpushed commits.** `git push -u origin <branch>`. This runs the
    pre-push hook (full suite). If it FAILS → STOP and report (don't merge with
@@ -103,8 +102,8 @@ $sha"
    confirm with the user before removing (gitignored `node_modules`, `zzz/` etc.
    are fine to discard).
 
-6. **Exit + remove the worktree.** If the session is IN the worktree:
-   `ExitWorktree` with `keep` (returns to the main checkout). Then
+6. **Remove the worktree.** Run the removal command from the main checkout (or
+   use `git -C <main>` so the current directory is irrelevant):
    `git -C <main> worktree remove --force <wt>`. Tolerate "already removed".
 
 7. **Delete the branch — local + origin.**

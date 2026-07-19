@@ -1,6 +1,6 @@
 # ABCDE Skills
 
-A five-skill **todo lifecycle** for [Claude Code](https://claude.com/claude-code): park a task, sharpen it, build it in isolation, ship it as a reviewed PR, and browse the backlog — each stage its own skill.
+A five-skill **todo lifecycle** for [Claude Code](https://claude.com/claude-code) and [Codex](https://openai.com/codex/): park a task, sharpen it, build it in isolation, ship it as a reviewed PR, and browse the backlog — each stage its own skill.
 
 > **A**dd · **B**rainstorm · **C**ode · **D**eliver · **E**xplore
 
@@ -35,14 +35,28 @@ npx skills add bishtbytes/abcde-skills --list                # preview first
 
 Then invoke `/add-todo`, `/code-todo`, etc. (Installed as a plugin, they're namespaced — `/abcde:add-todo`.)
 
-**Nothing lands in your repo.** The backlog indexer is **bundled with the skills** — they run it from `${CLAUDE_SKILL_DIR}`, so the only things that ever appear in your project are your own todo docs and the generated `docs/todo/INDEX.md`. No script or schema file to copy in.
+**Via Codex** (installs the five skills into `~/.codex/skills`):
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo bishtbytes/abcde-skills \
+  --path skills/add-todo \
+  --path skills/brainstorm-todo \
+  --path skills/code-todo \
+  --path skills/deliver-todo \
+  --path skills/explore-todos
+```
+
+Start a new Codex turn after installing. Codex invokes the skills from their descriptions; use a natural request such as “park this task” or “implement this todo.”
+
+**Nothing lands in your repo.** The backlog indexer is **bundled with the skills**, so the only things that ever appear in your project are your own todo docs and the generated `docs/todo/INDEX.md`. No script or schema file to copy in.
 
 ### One optional step — adopt the conventions
 
-The skills reference a few repo conventions (contract tests, temp-artifacts `zzz/`, branch/PR policy, quality gates) via `see the repo CLAUDE.md "…"`. Merge them into your repo's `CLAUDE.md` so those pointers resolve:
+The skills reference a few repo conventions (contract tests, temp-artifacts `zzz/`, branch/PR policy, quality gates) via your repository instructions. Merge them into `AGENTS.md` for Codex or `CLAUDE.md` for Claude Code:
 
 ```bash
-cat path/to/abcde-skills/CONVENTIONS.md >> CLAUDE.md   # then review/trim
+cat path/to/abcde-skills/CONVENTIONS.md >> AGENTS.md   # then review/trim
 ```
 
 Skip even that and the skills still function — they just point at conventions your repo may not have documented. See [`CONVENTIONS.md`](./CONVENTIONS.md).
@@ -57,7 +71,7 @@ These skills are **opinionated** — they encode a specific shipping discipline,
 - A JS/TS stack with **quality gates** — a `tsc` ratchet, an import/architecture check, and a test suite — run before a push.
 - A gitignored **`zzz/`** scratch dir for verification artifacts (screenshots, etc.).
 
-The backlog **indexer ships bundled** with the skills (run from `${CLAUDE_SKILL_DIR}`), so it's always available — no repo-local helper to install. Where a skill would otherwise touch something your repo lacks (e.g. the `docs/features/` specs, or the conventions above), it **degrades gracefully** rather than erroring — so the skills work in a plain repo too, just with fewer niceties.
+The backlog **indexer ships bundled** with the skills, so it's always available — no repo-local helper to install. Where a skill would otherwise touch something your repo lacks (e.g. the `docs/features/` specs, or the conventions above), it **degrades gracefully** rather than erroring — so the skills work in a plain repo too, just with fewer niceties.
 
 If your stack or branch model differs, fork and adapt — the skills are readable Markdown; the conventions live at the top of each `SKILL.md`, and in [`CONVENTIONS.md`](./CONVENTIONS.md).
 

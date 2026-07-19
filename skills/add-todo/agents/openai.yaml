@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Todo"
+  short_description: "Capture a self-contained task for later"
+  default_prompt: "Use $add-todo to park this task with enough context for a future session."
