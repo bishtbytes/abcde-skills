@@ -29,7 +29,7 @@ import path from "node:path";
 
 // Resolve against the repo the skill is invoked FROM (cwd), not the script's own
 // bundled location — the indexer ships inside the skill and is run from the
-// user's project as `node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs`.
+// user's project from its installed skill directory.
 const TODO_DIR = path.join(process.cwd(), "docs", "todo");
 
 const STATUS_ORDER = ["ready", "needs-discussion", "blocked"];
