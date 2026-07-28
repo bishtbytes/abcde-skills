@@ -162,14 +162,61 @@ succeeded; this is a bonus, so a decline costs nothing.
    run also auto-lowers the baseline when the feature REMOVED dead code — commit
    the lowered `scripts/knip/baseline.json` with the tech-debt PR.)
 
-2. **Propose a bounded batch and ASK.** Present the top 1–3 files worth chipping,
-   each with ONE concrete, behavior-preserving increment — the *next coherent
-   slice* toward its target structure (e.g. "extract the image-status helpers out
-   of `frame-ops.ts` into `frame/image-status.ts`"), NOT "fully fix it". Then STOP
-   and ask whether to build it. Nothing in scope / no scanner / user declines →
-   say so; you're done.
+2. **Judge the touched surface against the refactoring rubric (subagent).** The
+   scanner in step 1 sees SIZE + churn only; it can't see DESIGN debt — a 300-line
+   function doing six things, logic tangled with I/O, a god-object prop bag, a
+   deeply-nested closure buried in the render. So spawn ONE subagent to READ the
+   touched code files and judge them against the rubric below, returning concrete,
+   principle-cited findings. This is the signal for **WHAT** to fix; the scanner
+   only ranks **WHERE** it hurts. Skip only when no code files were touched.
 
-3. **Build it (only on yes).** Build in an **isolated worktree off develop**
+   Hand the subagent the touched-file list + this rubric verbatim, and require
+   **structured findings**, most-severe first — each:
+   `{ file, principle, severity (high|med|low), what (the smell + its exact
+   location, e.g. the function/block name + line), fix (the concrete extraction /
+   split), residual (projected file size + what's still oversized after) }`.
+
+   **Refactoring rubric — universal, no framework/repo specifics** (judge every
+   file against these; the subagent cites only the ones a file actually violates):
+   - **Single responsibility** — a unit has ONE reason to change; a function or
+     module doing N unrelated things is N units in a trenchcoat → split.
+   - **Size is the pointer, not the disease** — a long function / oversized file is
+     usually several responsibilities fused. Name the specific offending
+     function/block and the seam, never just "the file is big".
+   - **Functional core, imperative shell** — pure logic (decisions, data-shaping,
+     formatting) lives in pure, testable functions, separated from I/O (network,
+     disk, DB, DOM, framework lifecycle).
+   - **Cohesion & coupling** — things that change together belong together; a wide
+     parameter list or a god-object threaded everywhere is a missing abstraction.
+   - **Dependency direction** — dependencies point one way (toward stable / lower
+     layers); lower layers never reach up into higher ones.
+   - **Readable control flow** — early returns over deep nesting; no logic-bearing
+     closures buried inside other expressions (callbacks, IIFEs, template/JSX).
+   - **Name honestly; don't repeat** — names state intent; duplicated knowledge
+     gets one home (within reason — a little duplication beats a wrong abstraction).
+   - **Handle failure at the seams** — errors handled at boundaries, not swallowed
+     mid-logic.
+   - **A new capability is a new module behind a seam** — never a bigger file or a
+     new prefix-sibling bolted onto an already-large unit.
+
+3. **Propose a bounded batch and ASK.** Cross the judge's findings (WHAT) with the
+   scanner's hotspot rank (WHERE) and present the top 1–3 increments — each:
+   - **naming the specific unit** to extract (the function / closure / block /
+     inline data structure), NOT "a cohesive cluster" — e.g. *"extract the 300-line
+     `renderRow` closure into `ChecklistRow`"*, not *"extract something from
+     OutlineChecklist"*;
+   - stating the **projected residual** — the file's size + any unit still over
+     target AFTER the slice (*"→ 253 lines, no unit >400 left"*). A slice that
+     leaves the file's LARGEST unit / worst smell in place is **not** the primary
+     increment — never propose extracting a peripheral, already-clean chunk to
+     dodge the hard one (that's the trap: it moves lines without removing the debt);
+   - behavior-preserving (a `git mv` / extract / split / simplify) — the next
+     coherent slice toward the target structure, NOT "fully fix it".
+
+   Then STOP and ask whether to build it. Nothing in scope / no code touched / user
+   declines → say so; you're done.
+
+4. **Build it (only on yes).** Build in an **isolated worktree off develop**
    (like code-todo — isolation; never build in the main checkout, whose running
    dev server / uncommitted work you'd otherwise risk), set up via
    `./scripts/start-dev.sh`:
@@ -198,7 +245,7 @@ succeeded; this is a bonus, so a decline costs nothing.
      worktree — the depth trap), then confirm `pnpm betterer:ci` green. betterer
      is not a pre-push gate, so this hand-verify is the only check on it.
 
-4. **Open the PR + clean up.** From the worktree,
+5. **Open the PR + clean up.** From the worktree,
    `git push -u origin feat/<slug>-techdebt`, then
    `gh pr create --base develop --title "Tech debt: <what>"` with a body listing
    each increment (+ the betterer baseline drop when one happened, else the
