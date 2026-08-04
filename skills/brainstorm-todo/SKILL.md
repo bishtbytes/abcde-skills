@@ -1,6 +1,6 @@
 ---
 name: brainstorm-todo
-description: Use right after a todo is parked (by add-todo, or on any existing todo doc) to interrogate and RESOLVE its open questions — the scope choices, undecided options, edge cases, and behavior/contract calls that weren't settled when it was captured. Interviews the user relentlessly to resolve them, folds every answer back INTO the todo doc, then puts the resolved doc in front of a five-advisor council that reads it from five different angles and reports what's still missing — nothing is marked ready until that council clears it. Triggers on "/brainstorm-todo", "resolve the open questions", "grill me on this todo", "council this todo", and is auto-chained by add-todo when a freshly-parked todo still has unresolved questions. The B in the add → brainstorm → code → deliver flow; it closes gaps in an ALREADY-parked todo.
+description: Use right after a todo is parked (by add-todo, or on any existing todo doc) to interrogate and RESOLVE its open questions — the scope choices, undecided options, edge cases, and behavior/contract calls that weren't settled when it was captured. Interviews the user relentlessly to resolve them, folds every answer back INTO the todo doc, then puts the resolved doc in front of a five-advisor council that reads it from five different angles and reports what gaps are left — nothing is marked ready until that council clears it. Triggers on "/brainstorm-todo", "resolve the open questions", "grill me on this todo", "council this todo", and is auto-chained by add-todo when a freshly-parked todo still has unresolved questions. The B in the add → brainstorm → code → deliver flow; it closes gaps in an ALREADY-parked todo.
 ---
 
 # brainstorm-todo — resolve a parked todo's open questions
@@ -69,8 +69,8 @@ Step 4's call, not this step's.
 
 Nothing gets marked `ready` on one reader's judgment. Before the flip, the
 resolved doc goes in front of five advisors who each read it from a different
-angle, review each other's findings, and report what's still missing. Adapted
-from Karpathy's LLM Council — the peer-review round is the part that matters.
+angle and report the gaps they find. A chairman then sorts those findings and
+presents what's actually relevant. Adapted from Karpathy's LLM Council.
 
 Run it on the doc **as it stands after Step 3** — resolved, and implicitly
 claiming to be buildable. That claim is what the council exists to contradict.
@@ -84,7 +84,7 @@ wastes time and lets one advisor's framing bleed into the next). Each gets the
 full todo doc, the repo context it points at (`CLAUDE.md`, the specs and files it
 names), and its own angle. Tell each one to lean **fully** into that angle and not
 hedge or try to be balanced — the other four cover what it isn't covering, and
-the balancing happens in 4c.
+the balancing happens in 4b.
 
 - **The Contrarian** — assumes the spec is not buildable as written and goes
   looking for the proof. Which step falls apart, which case is unhandled, where a
@@ -105,32 +105,22 @@ the balancing happens in 4c.
 
 Each returns 150–300 words. No preamble, straight into the findings.
 
-### 4b. Peer review — five reviewers, spawned in parallel
+### 4b. Chairman — sort the findings, present what's relevant
 
-Collect the five responses and relabel them **A–E, shuffled** so the letters don't
-track the order above. The anonymity is the whole point: a reviewer who knows who
-said what defers to the angle it likes instead of judging the substance.
+One final agent gets the todo doc and all five advisor responses, labelled with
+who said what.
 
-Spawn five reviewers. Each sees the todo doc and all five anonymized responses,
-and answers three questions in under 200 words, referring to responses by letter:
+Five advisors told to find problems will find problems, and not all of them are
+real. Before presenting anything, the chairman **discards** every finding that is
+already answered by the doc, plainly out of scope, or invented to justify the
+run. This is what keeps Step 4 honest with Step 1's don't-manufacture-work guard
+— five angles widen what gets *looked at*, they don't lower the bar for what gets
+*raised*.
 
-1. Which response identifies the most important gap, and why?
-2. Which response is weakest — which of its "gaps" is invented, already answered
-   by the doc, or plainly out of scope?
-3. What did all five miss?
-
-**Question 2 is load-bearing.** It is what keeps this step honest with Step 1's
-guard: a council with five advisors told to find problems will find problems.
-Question 2 is how the invented ones get killed before they reach the user.
-
-### 4c. Chairman — gaps, not answers
-
-One final agent gets everything, de-anonymized: the doc, the five advisor
-responses labelled with who said what, and the five peer reviews.
-
-It does **not** produce a recommendation. This skill's contract is that *the user
-decides*; the council's job is to find what is still undecided. A chairman that
-answers its own questions turns brainstorm-todo into a rubber stamp.
+It does **not** produce a recommendation on what survives. This skill's contract
+is that *the user decides*; the council's job is to find what is still undecided.
+A chairman that answers its own questions turns brainstorm-todo into a rubber
+stamp.
 
 Its output:
 
@@ -144,7 +134,7 @@ Its output:
   explicitly. A council that reports only problems is indistinguishable from one
   that was never run.
 
-### 4d. Resolve, then flip
+### 4c. Resolve, then flip
 
 - **Blocking gaps → back to Step 2.** Interview on them, fold the answers in per
   Step 3.
@@ -156,8 +146,8 @@ Its output:
   the status where it is; note in the doc what it waits on.
 
 Report the verdict in chat — blocking, non-blocking, cleared. Don't write the
-advisor responses or the reviews into the doc; they're scaffolding. Only the
-*resolutions* land, via Step 3.
+advisor responses into the doc; they're scaffolding. Only the *resolutions* land,
+via Step 3.
 
 ## 5. Commit + push (same rules as add-todo)
 
