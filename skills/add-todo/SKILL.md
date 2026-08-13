@@ -35,19 +35,28 @@ parent: <index-slug>     # OPTIONAL — the index todo this belongs to (backlink
 
 **`project` is required.** One `docs/todo/` often serves a monorepo holding
 several deployable things, and without this the backlog reads as one
-undifferentiated pile. Set it to the project that OWNS the work — the thing that
-ships or deploys independently — not the area it touches (that is what `tags`
+undifferentiated pile. Set it to the project the work is **for** — the one that
+benefits and would sign it off — not the area it touches (that is what `tags`
 are for, and the two are unrelated axes: a todo can be `project: storefront`
 with `tags: [auth, r2]`).
 
-Pick the value from how the repo is deployed, not how it is foldered:
+**Ownership follows the beneficiary, not the file path.** Work inside a shared
+package, driven by one consumer's need, belongs to that consumer — not to
+whichever project happens to host the code. A fix to a shared component that
+only one site actually renders is that site's todo. Reach for the umbrella
+project only when the work serves the product as a whole. Getting this backwards
+is the easy mistake: the code's location is the loudest signal at parking time
+and the least relevant one.
+
+Pick the value from who the work serves, not from where the code lives:
 
 - **Single-project repo** → use the repo's own name for every todo. It costs one
   line and keeps the field uniform if the repo later grows a second project.
 - **Monorepo** → one value per independently-shipping thing (e.g. the main app,
-  plus each satellite site or service). Infer it from the paths the work
-  touches and STATE your inference when you report the parked todo, so a wrong
-  guess is cheap to correct.
+  plus each satellite site or service). Infer it from WHO ASKED and who
+  benefits — the conversation that produced the todo is usually a better signal
+  than the paths — and STATE your inference when you report the parked todo, so
+  a wrong guess is cheap to correct.
 - **Reuse existing values.** Read a few sibling todos' `project:` before
   inventing a name — a backlog with both `web` and `website` is worse than
   either. Match an existing spelling exactly, or ask if genuinely new.
