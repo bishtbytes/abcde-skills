@@ -90,7 +90,8 @@ function loadTodos() {
       slug,
       file,
       title: titleMatch ? titleMatch[1].trim() : slug,
-      project: fm.project || null,
+      // one name, or a list when the work genuinely serves several projects
+      projects: Array.isArray(fm.project) ? fm.project : fm.project ? [fm.project] : [],
       status: fm.status || null,
       category: fm.category || null,
       priority: fm.priority || null,
@@ -113,6 +114,7 @@ function sortItems(a, b) {
 function matchesFilters(item, filters) {
   return filters.every(({ key, value }) => {
     if (key === "tag") return item.tags.includes(value);
+    if (key === "project") return item.projects.includes(value);
     return (item[key] || "") === value;
   });
 }
@@ -140,7 +142,7 @@ function row(item) {
   // Mark index todos (📑) and initiative children (↳) so a flat table still
   // shows the structure the Initiatives section renders in full.
   const mark = item.kind === "index" ? "📑 " : item.parent ? "↳ " : "";
-  const project = SHOW_PROJECT ? ` ${item.project || "—"} |` : "";
+  const project = SHOW_PROJECT ? ` ${item.projects.join(", ") || "—"} |` : "";
   return `| ${pri} | ${item.effort || "—"} | ${item.category || "—"} |${project} ${mark}[${item.title}](./${item.file}) | ${tags} |`;
 }
 
@@ -238,7 +240,7 @@ function printList(items, filters) {
 
 const args = process.argv.slice(2);
 const items = loadTodos();
-SHOW_PROJECT = new Set(items.map((t) => t.project).filter(Boolean)).size > 1;
+SHOW_PROJECT = new Set(items.flatMap((t) => t.projects)).size > 1;
 // `--list` with filters → flat filtered table; anything else (bare invocation
 // or `--list` with no filters) → the full grouped view. No file is ever written.
 const filterArgs = args[0] === "--list" ? args.slice(1) : args;

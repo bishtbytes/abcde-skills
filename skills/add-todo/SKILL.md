@@ -21,7 +21,7 @@ fields + allowed values):
 
 ```yaml
 ---
-project: <name>          # which project in the repo owns this (see below)
+project: <name>          # or [<name>, <name>] — who the work is for (see below)
 status: ready            # ready | needs-discussion | blocked
 category: feature        # bug | feature | tech-debt | ux | spike | e2e
 priority: medium         # high | medium | low
@@ -60,6 +60,12 @@ Pick the value from who the work serves, not from where the code lives:
 - **Reuse existing values.** Read a few sibling todos' `project:` before
   inventing a name — a backlog with both `web` and `website` is worse than
   either. Match an existing spelling exactly, or ask if genuinely new.
+- **A list is allowed when the work genuinely serves several projects** —
+  `project: [storefront, admin]`. Prefer a single name; reach for the list only
+  when the work really does land in more than one, and do NOT use it to dodge
+  the choice. A list beats picking one project wrongly, but a precise single
+  name beats both. Filtering matches any member, so a todo listing three
+  projects shows up in all three backlogs.
 
 Choose the rest from the task itself: `status` is `needs-discussion` for a
 discussion/spike opener with no decided direction, `blocked` when it waits on ops
