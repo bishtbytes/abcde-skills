@@ -14,7 +14,8 @@ Each todo carries a YAML frontmatter block (the schema `add-todo` writes:
 `parent`). The **bundled** indexer reads it — use the script, do NOT hand-infer
 categories. It prints to stdout (read-only; writes no file), so just run it and
 present what it returns. Full view, or filtered by whatever the user asked for;
-filters are `status:` / `category:` / `priority:` / `tag:` / `kind:` / `parent:`,
+filters are `project:` / `status:` / `category:` / `priority:` / `tag:` / `kind:` /
+`parent:`,
 AND-combined:
 
 ```bash
@@ -22,6 +23,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs                              # e
 node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready          # buildable now
 node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list status:ready tag:short-story
 node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list category:bug priority:high
+node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list project:comedy-ocean   # one project's backlog
 node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list kind:index            # just the initiatives
 node ${CLAUDE_SKILL_DIR}/scripts/todo-index.mjs --list parent:online-video-architecture-index  # one initiative's children
 ```

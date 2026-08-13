@@ -21,6 +21,7 @@ fields + allowed values):
 
 ```yaml
 ---
+project: <name>          # which project in the repo owns this (see below)
 status: ready            # ready | needs-discussion | blocked
 category: feature        # bug | feature | tech-debt | ux | spike | e2e
 priority: medium         # high | medium | low
@@ -32,7 +33,26 @@ parent: <index-slug>     # OPTIONAL — the index todo this belongs to (backlink
 ---
 ```
 
-Choose values from the task itself: `status` is `needs-discussion` for a
+**`project` is required.** One `docs/todo/` often serves a monorepo holding
+several deployable things, and without this the backlog reads as one
+undifferentiated pile. Set it to the project that OWNS the work — the thing that
+ships or deploys independently — not the area it touches (that is what `tags`
+are for, and the two are unrelated axes: a todo can be `project: storefront`
+with `tags: [auth, r2]`).
+
+Pick the value from how the repo is deployed, not how it is foldered:
+
+- **Single-project repo** → use the repo's own name for every todo. It costs one
+  line and keeps the field uniform if the repo later grows a second project.
+- **Monorepo** → one value per independently-shipping thing (e.g. the main app,
+  plus each satellite site or service). Infer it from the paths the work
+  touches and STATE your inference when you report the parked todo, so a wrong
+  guess is cheap to correct.
+- **Reuse existing values.** Read a few sibling todos' `project:` before
+  inventing a name — a backlog with both `web` and `website` is worse than
+  either. Match an existing spelling exactly, or ask if genuinely new.
+
+Choose the rest from the task itself: `status` is `needs-discussion` for a
 discussion/spike opener with no decided direction, `blocked` when it waits on ops
 / a provider / another todo, else `ready`. Infer `category`, `priority`, `effort`
 and a couple of area `tags` from the work; default `priority: medium` when
@@ -105,7 +125,7 @@ away so other sessions and checkouts pick them up. Two hard rules:
   docs/todo/<child>.md`). Never `git add -A` / `git commit -a`. The working tree
   often carries unrelated in-progress edits (authoring files, logs) that must NOT
   ride along. (There's no generated index to stage — the backlog view is printed
-  on demand, not a committed file.)
+  on demand by `scripts/todo-index.mjs`, not a committed file.)
 - **`git push --no-verify origin develop`** — it's a docs-only change, so skip
   the pre-push gates. (`develop` is the integration branch; a direct push is
   allowed by repo policy.) If the push is rejected as non-fast-forward (someone
@@ -115,31 +135,33 @@ away so other sessions and checkouts pick them up. Two hard rules:
 If the user passed arguments, treat them as the task title/focus and tailor the
 doc accordingly.
 
-## After writing: ALWAYS run the gap check (chain to brainstorm-todo)
+## After writing: OFFER the gap check (prompt — don't auto-run it)
 
-**Do NOT gate this on your own "looks complete" judgment.** The author of a
-freshly-parked todo is the worst judge of whether it's actually done — a
-self-assessment right after writing reliably misses the vague spots ("a TTL",
-"somehow", "optionally"), the hand-waved failure modes, and the implicit scope
-calls. A *fresh adversarial re-read* catches what the vibe-check glosses, so make
-the check unconditional.
+add-todo's job is to park the task **fast**. The gap check — a fresh adversarial
+re-read that resolves the todo's loosely-specified and implicit decisions
+(`brainstorm-todo`) — is valuable but time-consuming: it interviews the user. So
+it stays behind a **user choice**, not an automatic chain. Adding a task should
+never force the user into a Q&A they didn't ask for.
 
-Once the doc is written **and pushed**, ALWAYS hand off to the `brainstorm-todo`
-skill on the just-written todo — announce "Parked — running the brainstorm gap
-check" and invoke it. brainstorm-todo does the fresh re-read: it enumerates every
-loosely-specified or implicit decision (not just lines you explicitly flagged
-"open"), resolves what it can by exploring the codebase, and interviews the user
-only on the genuine judgment calls. Its own guard handles the already-complete
-case — if the fresh pass truly finds nothing, it says so and stops (it will not
-invent questions). So:
+Once the doc is written, committed, and pushed, tell the user it's parked and
+**ask whether to run the gap check now** — a plain yes/no. For example:
 
-- **Hidden gaps (the common case)** → brainstorm finds them, fills what the code
-  answers, asks the user only the real calls, folds resolutions back in, flips
-  `status` to `ready`, re-pushes.
-- **Genuinely complete** → brainstorm re-reads, finds nothing, stops cheaply.
+> Parked as `docs/todo/<slug>.md`. Want me to run the gap check
+> (`brainstorm-todo`) now to resolve open questions, or leave it for later?
 
-The check ALWAYS runs; the *interview* only happens when there's something real.
-(The one exception: if the user has explicitly said to defer a question — "leave
-that for now" — honor that; the fresh pass still runs, but you don't press the
-deferred call.) This is the A→B hand-off in the add → brainstorm → code → deliver
-flow.
+- **User says yes** → hand off to `brainstorm-todo` on the just-written todo
+  (announce "Running the brainstorm gap check" and invoke it). It does the fresh
+  re-read: enumerates every loosely-specified or implicit decision (not just
+  lines you flagged "open"), resolves what the codebase answers, interviews the
+  user only on the genuine judgment calls, folds resolutions back in, flips
+  `status` to `ready`, and re-pushes. Its own guard handles the already-complete
+  case — if it finds nothing real it says so and stops (it won't invent
+  questions).
+- **User says no, or moves on** → stop. The todo is parked as-is and can be
+  gap-checked any time later by running `brainstorm-todo` (or `/brainstorm-todo`)
+  on it.
+
+When you can see the todo is non-trivial or fuzzy (open questions, undecided
+scope, "TBD" lines), **recommend** the gap check as you offer it — but the call is
+always the user's. This is the A→B hand-off in the add → brainstorm → code →
+deliver flow, now gated on a prompt instead of auto-running.

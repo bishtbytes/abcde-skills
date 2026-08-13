@@ -2,7 +2,7 @@
 /**
  * scripts/todo-index.mjs — the todo backlog reader.
  *
- * Scans every `docs/todo/*.md` for its YAML frontmatter (status / category /
+ * Scans every `docs/todo/*.md` for its YAML frontmatter (project / status / category /
  * priority / effort / tags / created — see docs/todo/README.md) and prints a
  * view to stdout. It is READ-ONLY: it never writes a file, so it is safe to run
  * concurrently from any number of sessions.
@@ -21,7 +21,8 @@
  * the listing.
  *
  * Filters (repeatable, AND-combined) for --list:
- *   status:<s>  category:<c>  priority:<p>  tag:<t>  kind:<k>  parent:<slug>
+ *   project:<p>  status:<s>  category:<c>  priority:<p>  tag:<t>  kind:<k>
+ *   parent:<slug>
  *   e.g.  node scripts/todo-index.mjs --list status:ready tag:short-story
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -89,6 +90,7 @@ function loadTodos() {
       slug,
       file,
       title: titleMatch ? titleMatch[1].trim() : slug,
+      project: fm.project || null,
       status: fm.status || null,
       category: fm.category || null,
       priority: fm.priority || null,
@@ -128,16 +130,25 @@ function capital(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : "—";
 }
 
+// A single-project repo would otherwise gain a column of identical values, so
+// the Project column appears only when the backlog actually spans projects.
+let SHOW_PROJECT = false;
+
 function row(item) {
   const pri = capital(item.priority);
   const tags = item.tags.length ? item.tags.join(", ") : "—";
   // Mark index todos (📑) and initiative children (↳) so a flat table still
   // shows the structure the Initiatives section renders in full.
   const mark = item.kind === "index" ? "📑 " : item.parent ? "↳ " : "";
-  return `| ${pri} | ${item.effort || "—"} | ${item.category || "—"} | ${mark}[${item.title}](./${item.file}) | ${tags} |`;
+  const project = SHOW_PROJECT ? ` ${item.project || "—"} |` : "";
+  return `| ${pri} | ${item.effort || "—"} | ${item.category || "—"} |${project} ${mark}[${item.title}](./${item.file}) | ${tags} |`;
 }
 
-const TABLE_HEAD = "| Priority | Effort | Category | Todo | Tags |\n|---|---|---|---|---|";
+function tableHead() {
+  return SHOW_PROJECT
+    ? "| Priority | Effort | Category | Project | Todo | Tags |\n|---|---|---|---|---|---|"
+    : "| Priority | Effort | Category | Todo | Tags |\n|---|---|---|---|---|";
+}
 
 /** The "Initiatives" section — one block per `kind: index` todo, with its
  *  children (todos whose `parent` is that index's slug) nested beneath. */
@@ -181,13 +192,13 @@ function renderGroups(items) {
     const list = buckets.get(status).sort(sortItems);
     if (!list.length) continue;
     parts.push(`## ${STATUS_LABEL[status]} (${list.length})\n`);
-    parts.push(TABLE_HEAD);
+    parts.push(tableHead());
     parts.push(list.map(row).join("\n"));
     parts.push("");
   }
   if (unclassified.length) {
     parts.push(`## Unclassified — missing/invalid frontmatter (${unclassified.length})\n`);
-    parts.push(TABLE_HEAD);
+    parts.push(tableHead());
     parts.push(unclassified.sort(sortItems).map(row).join("\n"));
     parts.push("");
   }
@@ -221,12 +232,13 @@ function printList(items, filters) {
     process.stdout.write(`No todos match — ${label}\n`);
     return;
   }
-  process.stdout.write(`# Todos — ${label} (${filtered.length})\n\n${TABLE_HEAD}\n`);
+  process.stdout.write(`# Todos — ${label} (${filtered.length})\n\n${tableHead()}\n`);
   process.stdout.write(filtered.map(row).join("\n") + "\n");
 }
 
 const args = process.argv.slice(2);
 const items = loadTodos();
+SHOW_PROJECT = new Set(items.map((t) => t.project).filter(Boolean)).size > 1;
 // `--list` with filters → flat filtered table; anything else (bare invocation
 // or `--list` with no filters) → the full grouped view. No file is ever written.
 const filterArgs = args[0] === "--list" ? args.slice(1) : args;
