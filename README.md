@@ -17,7 +17,7 @@ Todos aren't a scratch list here — they're **self-contained spec docs** that a
 | **C** | `code-todo` | Builds a todo end-to-end: isolated worktree, a test/spec impact gate, implementation, quality gates, screenshot verification, and a PR — with the todo retired in the finishing commit. |
 | **D** | `deliver-todo` | Merges the PR, tags the merge, tears down the worktree/branch, and pulls the base branch current. |
 | **E** | `explore-todos` | Lists the parked todos grouped by status and sorted by priority; filter by status/category/priority/tag; optional staleness check against the code. |
-| **F** | `fork-todo` | Forks the task under discussion to **another agent to build now** — captures it as a verified spec doc, dispatches it to a subagent or a second session, and sets the collision rules so this session can keep designing while it runs. |
+| **F** | `fork-todo` | Forks the task under discussion to **another agent to build now** — captures it as a verified spec in a temp file (out of the repo, so it can't become stale backlog), hands over the path, and sets the collision rules so this session can keep designing while it runs. |
 
 ## Install
 

@@ -1,6 +1,6 @@
 ---
 name: fork-todo
-description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec doc and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
+description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to a temp file (never into the repo), prints its path, and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
 argument-hint: "What to hand off (optional — defaults to the task under discussion)"
 ---
 
@@ -36,9 +36,20 @@ Say so and stop if not:
 
 ## Step 1 — write the spec
 
-Same shape and frontmatter as `add-todo` (`docs/todo/<slug>.md`, `status: ready`)
-— but written for an agent starting **now**, not a reader months out. That
-changes what has to be in it.
+**Write it to the OS temp directory, NOT into the repo** — the same rule
+`handoff` follows. Give it a descriptive kebab-case filename
+(`fork-cast-failure-surfacing.md`) and **print the absolute path on its own
+line** when you're done, because handing that path over IS the handoff.
+
+Out of the repo deliberately. This file is a channel between two agents, not
+backlog. Left in the tree it gets swept up by someone's `git add -A`, and then it
+outlives the build and reads months later as work still pending. `add-todo` owns
+`docs/todo/`; this does not.
+
+Keep the same shape as an `add-todo` doc, frontmatter included — it costs
+nothing and means the file can be promoted into `docs/todo/` unchanged if the
+work turns out to be worth parking instead of building. But write it for an agent
+starting **now**, not a reader months out. That changes what has to be in it.
 
 **Verify before you write.** Everything load-bearing gets checked against the
 code as it is at this moment, and carries `file:line`. A spec built from
@@ -87,8 +98,10 @@ to look over its shoulder. Give them the exact invocation:
 cd <worktree-or-repo-path> && claude
 ```
 
-…and the opening prompt to paste, which should say: read the spec, the decisions
-in it are settled, follow the commit split, and ask before committing.
+…and the opening prompt to paste, quoting **the absolute temp path** — the new
+session shares no context with this one, so a repo-relative path or "the spec"
+means nothing to it. The prompt should say: read that file, the decisions in it
+are settled, follow the commit split, and ask before committing.
 
 Either way, **check the target tree is clean first** (`git status`) and say what
 you found. Dispatching onto uncommitted work risks the agent committing someone
@@ -138,8 +151,11 @@ Read what came back before relaying it. Then:
 - Report what it did in your own words, including anything it changed that the
   spec didn't anticipate, and any test it altered or removed.
 - Lift the edit-free rule and say so.
-- Retire the spec doc, or reduce it to what stayed true. A dispatched spec that
-  outlives its build gets picked up later as if it were still pending.
+- Leave the spec where it is — it's in temp, so it ages out on its own and can't
+  be mistaken later for pending backlog. Nothing to retire.
+- If the decisions in it are worth keeping, don't keep the *file* — fold the
+  reasoning into the commit messages, or promote it to `docs/todo/` deliberately.
+  A superseded spec preserved wholesale is a document that argues with itself.
 
 ---
 
