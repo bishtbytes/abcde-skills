@@ -1,6 +1,6 @@
 ---
-name: followup-todo
-description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec doc and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/followup-todo".
+name: fork-todo
+description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec doc and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
 argument-hint: "What to hand off (optional — defaults to the task under discussion)"
 ---
 

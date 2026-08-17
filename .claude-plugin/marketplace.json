@@ -7,7 +7,7 @@
     {
       "name": "abcde",
       "source": "./",
-      "description": "The ABCDE todo workflow for Claude Code — Add · Brainstorm · Code · Deliver · Explore · Followup. Spec-driven, worktree-isolated, PR-based shipping built around parked todo docs."
+      "description": "The ABCDE todo workflow for Claude Code — Add · Brainstorm · Code · Deliver · Explore · Fork. Spec-driven, worktree-isolated, PR-based shipping built around parked todo docs."
     }
   ]
 }
