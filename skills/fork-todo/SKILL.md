@@ -1,6 +1,6 @@
 ---
 name: fork-todo
-description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to a temp file (never into the repo), prints its path, and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
+description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to the OS temp directory (never the repo, never a session scratchpad), prints its absolute path, and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
 argument-hint: "What to hand off (optional — defaults to the task under discussion)"
 ---
 
@@ -36,15 +36,25 @@ Say so and stop if not:
 
 ## Step 1 — write the spec
 
-**Write it to the OS temp directory, NOT into the repo** — the same rule
-`handoff` follows. Give it a descriptive kebab-case filename
-(`fork-cast-failure-surfacing.md`) and **print the absolute path on its own
+**Write it to the OS temp directory** — `$TMPDIR` if set, else `/tmp` — the same
+rule `handoff` follows. A short descriptive kebab-case filename
+(`fork-cast-failure-surfacing.md`), and **print the absolute path on its own
 line** when you're done, because handing that path over IS the handoff.
 
-Out of the repo deliberately. This file is a channel between two agents, not
-backlog. Left in the tree it gets swept up by someone's `git add -A`, and then it
-outlives the build and reads months later as work still pending. `add-todo` owns
-`docs/todo/`; this does not.
+Two places it must NOT go, for different reasons:
+
+- **Not the repo.** This file is a channel between two agents, not backlog. Left
+  in the tree it gets swept up by someone's `git add -A`, and then it outlives the
+  build and reads months later as work still pending. `add-todo` owns
+  `docs/todo/`; this does not.
+- **Not your session scratchpad**, even when the harness tells you to prefer one
+  for temp files. That instruction assumes the file is yours; this file's entire
+  purpose is to be read by a *different* process. A scratchpad path is scoped to
+  one session, can be cleaned when it ends, and is buried under a
+  project-shaped prefix — so it reads as repo-local to the person pasting it and
+  can't be relied on to still exist when the other agent opens it. **The OS temp
+  directory is the shared ground between two processes; a scratchpad is not.**
+  This is the one case where the scratchpad rule is the wrong default.
 
 Keep the same shape as an `add-todo` doc, frontmatter included — it costs
 nothing and means the file can be promoted into `docs/todo/` unchanged if the
