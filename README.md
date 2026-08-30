@@ -19,6 +19,14 @@ Todos aren't a scratch list here — they're **self-contained spec docs** that a
 | **E** | `explore-todos` | Lists the parked todos grouped by status and sorted by priority; filter by status/category/priority/tag; optional staleness check against the code. |
 | **F** | `fork-todo` | Forks the task under discussion to **another agent to build now** — captures it as a verified spec in a temp file (out of the repo, so it can't become stale backlog), hands over the path, and sets the collision rules so this session can keep designing while it runs. |
 
+### Also included
+
+One skill that isn't part of the lifecycle and carries no letter:
+
+| Skill | What it does |
+|---|---|
+| `plain-language` | Rewrites the previous answer in plain everyday language with no analogies, then holds that register for the rest of the session. For when a design discussion has drifted into jargon and you want the thread readable again. |
+
 ## Install
 
 **Via the [`skills` CLI](https://github.com/vercel-labs/skills)** (project-scoped, or add `-g` for global):
