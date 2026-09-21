@@ -1,15 +1,30 @@
 ---
 name: fork-todo
-description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to the OS temp directory (never the repo, never a session scratchpad), prints its absolute path, and dispatches it — to a background subagent or a second session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
+description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to the OS temp directory (never the repo, never a session scratchpad), prints its absolute path, and hands it to a FRESH SEPARATE SESSION — never a background subagent, never anything running inside this session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
 argument-hint: "What to hand off (optional — defaults to the task under discussion)"
 ---
 
 Take the task this conversation just settled, write it down so it survives
-without the conversation, and hand it to **another agent to build now** — while
-this session stays free to keep designing.
+without the conversation, and hand it to **a fresh session that builds it now** —
+while this session stays free to keep designing.
 
 This is the **F** in the flow, and it is the odd one out: A–E move a todo through
 a lifecycle, F **forks** one sideways.
+
+**The work leaves this session. Always.** The output of this skill is a spec file
+and an invocation the user pastes into a *new* session — not a dispatch you
+perform. The point is not merely that someone else does the typing; it is that
+**this conversation stays clean**, with no build traffic in it. So:
+
+- **Never a background subagent**, and never any other agent running inside this
+  session. Those report back *here* — progress, tool output, completion notices —
+  which is exactly the interruption the fork exists to avoid. A subagent is not a
+  lighter-weight fork; it is the thing a fork is instead of.
+- **Never build it here yourself**, however small it looks once the spec is
+  written.
+
+If the work genuinely belongs in this session, that is a decision not to fork —
+say so and drop the skill, rather than forking it into a subagent.
 
 **Not `add-todo`** — that parks work nobody starts, for cold pickup later. This
 dispatches work that begins immediately.
@@ -61,6 +76,13 @@ nothing and means the file can be promoted into `docs/todo/` unchanged if the
 work turns out to be worth parking instead of building. But write it for an agent
 starting **now**, not a reader months out. That changes what has to be in it.
 
+**Write for a reader with zero shared context.** The session that opens this file
+has never seen this conversation — no scrollback, no earlier files read, no idea
+what "the fix we discussed" refers to. Every pronoun that points at the
+conversation instead of at the code is a question that session cannot answer.
+Spell out the nouns, and say up front what the task is in one paragraph before
+any detail.
+
 **Verify before you write.** Everything load-bearing gets checked against the
 code as it is at this moment, and carries `file:line`. A spec built from
 conversational memory sends the agent to a function that moved three commits ago,
@@ -92,30 +114,30 @@ unwanted PR — or work that stops one step short.
 reviewable on its own. It keeps the diff readable and gives you an obvious place
 to interrupt.
 
-## Step 2 — pick how it's dispatched
+## Step 2 — hand it to a fresh session
 
-Ask, and recommend based on size:
-
-**A background subagent** — no second terminal, and results come back through
-this session. Good for a contained, well-specified change. The cost is that the
-person can only steer it through you.
-
-**A second interactive session** — its own context, directly steerable, and it
-can be watched. Better for anything touching many files, or where they'll want
-to look over its shoulder. Give them the exact invocation:
+There is no dispatch choice to make. Give the user what they need to start a new
+session and paste one prompt into it:
 
 ```
 cd <worktree-or-repo-path> && claude
 ```
 
-…and the opening prompt to paste, quoting **the absolute temp path** — the new
-session shares no context with this one, so a repo-relative path or "the spec"
-means nothing to it. The prompt should say: read that file, the decisions in it
-are settled, follow the commit split, and ask before committing.
+…and the opening prompt, quoting **the absolute temp path** — the new session
+shares no context with this one, so a repo-relative path or "the spec" means
+nothing to it. The prompt should say: read that file, the decisions in it are
+settled, follow the commit split, and ask before committing.
 
-Either way, **check the target tree is clean first** (`git status`) and say what
-you found. Dispatching onto uncommitted work risks the agent committing someone
-else's changes inside its own.
+Print both as copyable blocks, and stop there. **You do not start the work, and
+you do not spawn anything that does** — no background subagent, no task agent,
+no "I'll just kick it off here". The user starts the other session; this one goes
+back to talking. If that feels like a step you could save them, re-read why:
+anything you launch from here reports back into this conversation, and a clean
+conversation is the entire deliverable.
+
+Before you hand it over, **check the target tree is clean** (`git status`) and
+say what you found. Starting the other session on uncommitted work risks it
+committing someone else's changes inside its own.
 
 ## Step 3 — set the collision rules
 
@@ -152,14 +174,20 @@ contradicts itself is worse than no spec:
 Keep the top-of-file status current — what has landed, what is open, which
 sections are superseded. That header is what a resuming agent reads first.
 
+The spec is the only channel. Nothing from the forked session arrives here on its
+own, and that is by design — don't poll for it, and don't go looking for its
+output. Keep designing until the user brings it back.
+
 ## Step 5 — when it lands
 
-Read what came back before relaying it. Then:
+The other session reports to the user, not to you, so this step starts when they
+say it's done — usually by pasting what it did. Then:
 
 - Confirm the finishing line was honoured — the right branch, the agreed stop
-  point, gates actually run rather than assumed.
-- Report what it did in your own words, including anything it changed that the
-  spec didn't anticipate, and any test it altered or removed.
+  point, gates actually run rather than assumed. Check the repo yourself rather
+  than taking the summary's word for it.
+- Say plainly anything it changed that the spec didn't anticipate, and any test
+  it altered or removed.
 - Lift the edit-free rule and say so.
 - Leave the spec where it is — it's in temp, so it ages out on its own and can't
   be mistaken later for pending backlog. Nothing to retire.
@@ -174,6 +202,8 @@ Read what came back before relaying it. Then:
 Two agents on one codebase fail in a small number of ways, and every rule above
 is aimed at one of them:
 
+- The build lands back in this session → the fresh-session rule: no subagents, no
+  building it here.
 - Both edit the same file → the edit-free rule.
 - The fork re-opens a settled decision → SETTLED markers with reasons.
 - The fork "fixes" something deliberate → the NOT-broken section.
@@ -182,5 +212,6 @@ is aimed at one of them:
 - The spec drifts from the code it describes → verified `file:line`, re-read
   before each commit.
 
-If a fork goes wrong, it is nearly always one of these six, and nearly always
-because the spec was written from memory instead of from the code.
+If a fork goes wrong, it is nearly always one of these, and nearly always
+because the spec was written from memory instead of from the code — or because
+the fork never actually left the session.
