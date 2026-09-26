@@ -74,7 +74,7 @@ or delete, `develop`/`main`.
 
 Merged to develop on $(date +%F)
 $sha"
-     git -C <main> push origin "$tag"        # tolerate "already exists"
+     git -C <main> push --no-verify origin "$tag"   # tolerate "already exists"
    fi
    ```
    The annotated tag carries its own date, so later you get newest-first merge
@@ -110,8 +110,21 @@ $sha"
 7. **Delete the branch — local + origin.**
    - `git -C <main> branch -D <branch>` (`-D`: it's merged via the PR, which may
      not be in the *local* develop's history yet).
-   - `git -C <main> push origin --delete <branch>` — tolerate "remote ref does
-     not exist" (GitHub auto-deletes on merge for some repos).
+   - `git -C <main> push --no-verify origin --delete <branch>` — tolerate
+     "remote ref does not exist" (GitHub auto-deletes on merge for some repos).
+
+   **`--no-verify` on BOTH pushes in this skill (the tag in step 3 and this
+   delete) is load-bearing.** A tag or delete push still fires the repo's
+   pre-push hook, which may run the full test suite — from the main checkout,
+   after the worktree is gone. A red or flaky suite (or a hook that refuses)
+   then blocks the delete, and "tolerate" swallowed that silently: merged
+   branches piled up on origin while every run reported success. These pushes
+   carry no code, so the gate has nothing to check.
+
+   **Then VERIFY the origin branch is gone — never assume it.**
+   `git -C <main> ls-remote --exit-code --heads origin <branch>`: exit 2 means
+   gone; exit 0 means the delete did not land → say so loudly in the step 9
+   report ("origin branch NOT deleted: <reason>"), never report it as removed.
 
 8. **Pull develop (FF-only).** `git -C <main> fetch origin develop`. Then:
    - If the main checkout is **on** `develop`: if its tree is dirty,
@@ -125,7 +138,8 @@ $sha"
 9. **Report the work summary.** List the commits that landed on develop from this
    branch (the pushed set from step 2, or `git log --oneline <merge-base>..<tip>`)
    so the user sees exactly what shipped. Confirm: PR # merged, worktree removed,
-   branch gone (local + origin), local develop at `<sha>`.
+   branch gone (local + origin — the origin half as VERIFIED in step 7, never
+   assumed), local develop at `<sha>`.
 
 ## 10. Tech-debt follow-up PR (optional — always ask first)
 
