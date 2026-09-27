@@ -233,6 +233,20 @@ does). Work out whether the todo's change is worth a picture and classify:
   data only), or an existing diagram still holds. Say WHY, so "no diagram" is a
   recorded decision, not an oversight.
 
+### Scope ledger (every item in the todo, accounted for)
+
+List EVERY item the todo asks for — numbered problems, checklist rows, "and
+also" clauses, the title's own promises — and mark each one **build** or
+**not this run**. An item the todo marks "needs a decision" is a human decision:
+put it to the user HERE, at this gate, never resolve it by quietly leaving it
+out. Every **not this run** item needs the user's explicit OK in this gate plus a
+named destination (another todo, a card, or "dropped"). The failure this
+prevents (learned hard, 2026-09): a todo titled "…leaves files behind in R2 AND
+in the render output" shipped only the R2 half; the renders item was recorded as
+out of scope in a spec's "known gaps" line and never put to the user, who found
+out weeks later. A narrowed scope that the user did not approve is a broken
+promise, however well it is documented.
+
 **Present ALL SIX assessments — plus, for a bare invocation, the batch you're
 about to build, and (when an e2e run is warranted) the up-front ask to run it as
 the last step — and WAIT for the user's go-ahead before touching code.** Their
@@ -340,6 +354,10 @@ problem). Rules:
   the file.
 - **Partially done** → leave the file; trim it to the remaining scope
   instead of deleting.
+- **Never retire an item by moving it** to another todo, a spec's "known
+  gaps", or a card unless the Step-1 scope ledger recorded that move with the
+  user's OK. Scope that turns out undeliverable mid-run is new ambiguity —
+  STOP and ask; don't narrow silently.
 - **Discussion/spike notes you didn't implement** stay untouched.
 
 **Write/update the feature spec(s) identified in Step 1** (`docs/features/`),
@@ -494,6 +512,13 @@ git -C /tmp/gist-pr<n> -c "credential.helper=!gh auth git-credential" push origi
 #    curl -sI <raw-url> | grep -iE "HTTP/|content-type"  → expect 200 image/png
 # ![label](https://gist.githubusercontent.com/<user>/<gist-id>/raw/<filename>)
 ```
+
+**Open the PR body with `## Not done from the todo`** — every **not this run**
+item from the Step-1 scope ledger, each with where it went and the user's OK
+(e.g. "renders → `render-download-store-to-r2.md`, agreed at the gate"). If the
+PR delivers everything, the section says so in one line ("Everything in the todo
+is done."). It goes FIRST, above the hero image, and the PR title must not
+promise more than was delivered. deliver-todo refuses to merge a PR without it.
 
 Always include in the PR body:
 - the key visual artifact itself (e.g. a generated thumbnail/render)

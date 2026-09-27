@@ -46,6 +46,14 @@ or delete, `develop`/`main`.
      intended?" Yes → proceed; no → hold the merge so the spec can land on
      the branch first. A nudge, never a hard block — and skip the ask when
      the PR is docs-only or already MERGED.
+   - **Scope check — a HARD block, not a nudge.** Read the PR body's
+     `## Not done from the todo` section. Missing → STOP: the PR can't be
+     merged until it says what, if anything, it left out (check the todo it
+     retired: `git show <first-parent>:docs/todo/<slug>.md`). Present →
+     show the user every item listed and ask for an explicit yes to merge
+     with those left out. Only "Everything in the todo is done." skips the
+     ask. A dropped item the user never heard about is the failure this
+     guards (see code-todo's Step-1 scope ledger).
    - **OPEN + mergeable** → `gh pr merge <#> --merge` (merge commit — **no
      squash, no rebase**).
    - **OPEN + not mergeable** (conflicts / failing checks / changes requested) →
