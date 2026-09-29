@@ -110,6 +110,26 @@ it, so the change reads as deliberate rather than as tests quietly vanishing.
 Which gates must be green before it stops? Ambiguity here is how you get an
 unwanted PR — or work that stops one step short.
 
+**The spec IS the approval — the fork runs autonomously.** The user settled the
+design before you forked it, so handing over the spec is the go-ahead for the
+whole finishing line: build, run the gates, commit, push, open the PR. The fork
+does **not** stop to ask before committing or between commits — a mid-run
+check-in drags the user back to a session they forked precisely so they would not
+have to watch it. So put the guard where it belongs, in the spec, as **hard
+stops** rather than checkpoints:
+
+- **What it must never do**, named explicitly — e.g. merge, deploy, touch
+  production or a shared service, push to a protected branch, switch the main
+  checkout. These are the things worth protecting; a commit on its own branch is
+  not one of them.
+- **When it stops and asks**: a genuine blocker, a gate it cannot make green
+  without changing something the spec marks SETTLED or must-survive, or a
+  question the spec does not answer. Everything else it decides and proceeds.
+
+If you find yourself wanting an approval checkpoint mid-build, that is a sign the
+spec is not settled enough to fork — resolve it here first rather than
+exporting the question.
+
 **Split it.** Independent commits in a stated order, each one landable and
 reviewable on its own. It keeps the diff readable and gives you an obvious place
 to interrupt.
@@ -126,7 +146,11 @@ cd <worktree-or-repo-path> && claude
 …and the opening prompt, quoting **the absolute temp path** — the new session
 shares no context with this one, so a repo-relative path or "the spec" means
 nothing to it. The prompt should say: read that file, the decisions in it are
-settled, follow the commit split, and ask before committing.
+settled, follow the commit split, and **the spec is pre-approved — build it
+through to its finishing line (gates, commits, push, PR) without asking**,
+stopping only for the hard stops the spec names. **Never** write "ask before
+committing" into a fork prompt: it turns an autonomous fork back into a session
+the user has to babysit.
 
 Print both as copyable blocks, and stop there. **You do not start the work, and
 you do not spawn anything that does** — no background subagent, no task agent,
