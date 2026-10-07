@@ -98,7 +98,7 @@ This is the single gate that BEGINS implementation, and it runs whether the
 todo was handed over directly or picked in Step 0 — **including a named todo,
 which would otherwise run straight through with no checkpoint.**
 
-For each todo in scope, work out what it does across SIX artifacts that must
+For each todo in scope, work out what it does across SIX artifacts (plus a ripple sweep) that must
 stay in lockstep with the code — the two test layers, the REST `.http` request
 collection, the living feature specs, the behavioral contracts, and the
 diagrams — and classify each. The reasoning is shared: a behavior change
@@ -233,6 +233,20 @@ does). Work out whether the todo's change is worth a picture and classify:
   data only), or an existing diagram still holds. Say WHY, so "no diagram" is a
   recorded decision, not an oversight.
 
+### Ripple sweep (who else reads what this changes)
+
+A feature's own screens get built; the screens it DIDN'T mean to touch are what
+go stale. For every data shape the todo changes — a field gains values, one
+thing becomes several (one full body → front / back / side), a derived value
+becomes stored, a meaning shifts — grep for every reader and editor of the old
+shape (types, resolvers, routes, studio controls, chat ops, chips/labels) and
+list each with a verdict: **updates** (in scope), **still correct** (say why),
+or **gap** (put to the user here, like any scope item). The failure this
+prevents (2026-10): full-body angles turned one body into three, but the
+frame's "Cast in this frame" picker still offered only portrait / full body —
+nobody could pick an angle, and nothing flagged it because no test or spec
+pointed at that modal.
+
 ### Scope ledger (every item in the todo, accounted for)
 
 List EVERY item the todo asks for — numbered problems, checklist rows, "and
@@ -247,7 +261,7 @@ out of scope in a spec's "known gaps" line and never put to the user, who found
 out weeks later. A narrowed scope that the user did not approve is a broken
 promise, however well it is documented.
 
-**Present ALL SIX assessments — plus, for a bare invocation, the batch you're
+**Present ALL SIX assessments and the ripple sweep — plus, for a bare invocation, the batch you're
 about to build, and (when an e2e run is warranted) the up-front ask to run it as
 the last step — and WAIT for the user's go-ahead before touching code.** Their
 go-ahead authorizes the WHOLE run including the approved e2e; don't start the
@@ -422,6 +436,12 @@ each contract to its feature spec's invariants section with the test path.
   identified in **Step 1** (new logic gets new tests; changed behavior gets its
   assertions updated). A new uncovered behavior shipping without the test Step 1
   called for is a miss — not "deferred".
+- **Ripple re-sweep** — re-run Step 1's ripple grep against the FINISHED diff
+  (implementation often changes a shape the plan didn't foresee). Every reader
+  of a changed shape that the diff didn't touch and Step 1 didn't clear as
+  "still correct" is a gap: fix it if it's inside the agreed scope, otherwise
+  list it in the PR body under "Ripple gaps" and park a todo for it — never
+  silently ship past it.
 
 ## 5. Screenshot verification → OUTPUT_DIR (`zzz/`)
 
