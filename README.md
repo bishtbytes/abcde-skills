@@ -1,8 +1,10 @@
 # ABCDE Skills
 
-A five-skill **todo lifecycle** for [Claude Code](https://claude.com/claude-code) and [Codex](https://openai.com/codex/): park a task, sharpen it, build it in isolation, ship it as a reviewed PR, and browse the backlog — each stage its own skill.
+**The ABCDE of agent-driven development.**
 
-> **A**dd · **B**rainstorm · **C**ode · **D**eliver · **E**xplore
+A six-skill **todo lifecycle** for [Claude Code](https://claude.com/claude-code) and [Codex](https://openai.com/codex/): park a task, sharpen it, build it in isolation, ship it as a reviewed PR, browse the backlog — and, when you'd rather not wait, fork the work to a second agent while you keep designing.
+
+> **A**dd · **B**rainstorm · **C**ode · **D**eliver · **E**xplore · **F**ork
 
 Todos aren't a scratch list here — they're **self-contained spec docs** that a fresh session (human or agent) can pick up cold, carry through an isolated worktree, gate, and land as a PR with the tests and feature specs kept in lockstep.
 
@@ -15,6 +17,16 @@ Todos aren't a scratch list here — they're **self-contained spec docs** that a
 | **C** | `code-todo` | Builds a todo end-to-end: isolated worktree, a test/spec impact gate, implementation, quality gates, screenshot verification, and a PR — with the todo retired in the finishing commit. |
 | **D** | `deliver-todo` | Merges the PR, tags the merge, tears down the worktree/branch, and pulls the base branch current. |
 | **E** | `explore-todos` | Lists the parked todos grouped by status and sorted by priority; filter by status/category/priority/tag; optional staleness check against the code. |
+| **F** | `fork-todo` | Forks the task under discussion to **another agent to build now** — captures it as a verified spec in a temp file (out of the repo, so it can't become stale backlog), hands over the path, and sets the collision rules so this session can keep designing while it runs. |
+
+### Also included
+
+Skills that aren't steps of the lifecycle and carry no letter:
+
+| Skill | What it does |
+|---|---|
+| `gaps-todo` | Checks a change for what it forgot to touch: walks the project's cross-cutting rules (staleness, delete cascades, sync, …) and asks whether the new thing follows each one and whether existing features must change because of it; then sibling features, readers of changed data shapes, and the tests/specs that should move with it. Read-only — reports gaps with a recommendation. Runs standalone on a PR, and inside `code-todo` (plan + finished diff) and `deliver-todo` (before the merge). Expects a rules catalog — see CONVENTIONS.md "Cross-cutting rules". |
+| `plain-language` | Rewrites the previous answer in plain everyday language with no analogies, then holds that register for the rest of the session. For when a design discussion has drifted into jargon and you want the thread readable again. |
 
 ## Install
 
@@ -61,19 +73,27 @@ cat path/to/abcde-skills/CONVENTIONS.md >> AGENTS.md   # then review/trim
 
 Skip even that and the skills still function — they just point at conventions your repo may not have documented. See [`CONVENTIONS.md`](./CONVENTIONS.md).
 
-## What this assumes (adopt the workflow, not just the skills)
+## Prerequisites
 
-These skills are **opinionated** — they encode a specific shipping discipline, not a generic todo list. Installing them means adopting that workflow. They assume a repo that uses:
+### Required
 
-- A **`develop` integration branch**, with feature work in **git worktrees** and PRs opened against `develop` (only `main` protected, changed via a `develop → main` release PR).
-- A **`docs/todo/`** backlog of frontmatter'd todo docs, and **`docs/features/`** living feature specs kept in lockstep with the code.
-- Behavioral **CONTRACT tests** (a `describe("CONTRACT: …")` convention) asserting agreed invariants.
-- A JS/TS stack with **quality gates** — a `tsc` ratchet, an import/architecture check, and a test suite — run before a push.
-- A gitignored **`zzz/`** scratch dir for verification artifacts (screenshots, etc.).
+| Requirement | Why | Setup |
+|---|---|---|
+| **GitHub + `gh`, signed in** | PRs, tags, gists | `brew install gh` → `gh auth login` (repo on GitHub) |
+| **A `develop` branch** | worktrees + PRs target it | `git switch -c develop && git push -u origin develop` |
+| **The [`capture`](https://github.com/bishtbytes/capture) skill** | `code-todo` screenshots + diagrams | `npx skills add bishtbytes/capture -g -a claude-code` |
+| **A JS/TS toolchain** | the `code-todo` gates | `node` + `tsc` / `eslint` / `vitest` |
+| **A Unix shell** | `lsof` / `curl` / `trash` | macOS or Linux (Windows → WSL) |
 
-The backlog **indexer ships bundled** with the skills, so it's always available — no repo-local helper to install. Where a skill would otherwise touch something your repo lacks (e.g. the `docs/features/` specs, or the conventions above), it **degrades gracefully** rather than erroring — so the skills work in a plain repo too, just with fewer niceties.
+### Optional (degrades gracefully — skipped with a note if absent)
 
-If your stack or branch model differs, fork and adapt — the skills are readable Markdown; the conventions live at the top of each `SKILL.md`, and in [`CONVENTIONS.md`](./CONVENTIONS.md).
+- **Repo scripts** — `scripts/start-dev.sh`, `scripts/debt-report.mjs`, `scripts/knip/ratchet.mjs`.
+- **Repo conventions** — `docs/todo/`, `docs/features/`, `docs/diagrams/`, `CONTRACT:` tests, a pre-push hook, `zzz/`.
+- **Backlog indexer** — bundled with the skills; nothing to install.
+
+## Adopt the workflow, not just the skills
+
+These skills are **opinionated** — a worktree per feature, todo docs as specs, living feature specs, `CONTRACT:` tests, gates before every push. Details at the top of each `SKILL.md` and in [`CONVENTIONS.md`](./CONVENTIONS.md); if your stack or branch model differs, fork and adapt.
 
 ## License
 

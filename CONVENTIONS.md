@@ -43,6 +43,18 @@ contracts / key files / known limitations / **invariants** (which list the
 CONTRACT tests + their paths). `code-todo`'s Step-1 gate flags which specs a
 change touches.
 
+## Cross-cutting rules
+
+A **rules catalog** lists the behaviors many features must each implement —
+what goes stale, what a delete takes with it, what syncs, what blocks or costs a
+generation, and so on. `gaps-todo` walks it for every change, asking whether the
+new thing follows each rule and whether existing features must change because
+of it. Default path: `docs/features/cross-cutting-rules.md` (name another one
+here if yours lives elsewhere). Per rule: what it governs, the changes that
+trigger it, the siblings that already follow it (with paths), where it is
+defined (spec + CONTRACT tests + a grep that finds every participant), and its
+classic miss. When a gap slips through, add or sharpen the rule in the same fix.
+
 ## Temporary artifacts
 
 Verification screenshots, demo media, and captured outputs go under a

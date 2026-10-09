@@ -1,6 +1,6 @@
 ---
 name: code-todo
-description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across five artifacts — unit/integration (vitest), e2e, the living feature specs in docs/features/, behavioral contracts, and applicable diagrams in docs/diagrams/ — naming which existing ones need updating, where new ones are warranted, or no change (with why); when an e2e run is warranted it ALSO asks up front, at the same gate, for permission to run it as the last step, so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, the approved e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
+description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across six artifacts — unit/integration (vitest), e2e, the REST `.http` request collection in rest/, the living feature specs in docs/features/, behavioral contracts, and applicable diagrams in docs/diagrams/ — naming which existing ones need updating, where new ones are warranted, or no change (with why); when an e2e run is warranted it ALSO asks up front, at the same gate, for permission to run it as the last step, so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, the approved e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
 ---
 
 # code-todo
@@ -98,11 +98,12 @@ This is the single gate that BEGINS implementation, and it runs whether the
 todo was handed over directly or picked in Step 0 — **including a named todo,
 which would otherwise run straight through with no checkpoint.**
 
-For each todo in scope, work out what it does across FOUR artifacts that must
-stay in lockstep with the code — the two test layers, the living feature
-specs, and the behavioral contracts — and classify each. The reasoning is
-shared: a behavior change silently breaks a green suite (or silently outdates
-a feature spec, or silently voids an agreement) unless you name the affected
+For each todo in scope, work out what it does across SIX artifacts (plus a gaps check) that must
+stay in lockstep with the code — the two test layers, the REST `.http` request
+collection, the living feature specs, the behavioral contracts, and the
+diagrams — and classify each. The reasoning is shared: a behavior change
+silently breaks a green suite (or silently outdates a feature spec, a `.http`
+call, or a diagram, or silently voids an agreement) unless you name the affected
 artifact up front, and new behavior ships untested / undocumented unless you
 decide to cover it now.
 
@@ -145,6 +146,35 @@ run: resolving it here is the whole point — the run is autonomous after
 go-ahead, so an unasked end-step silently drops (the exact gap this skill
 exists to close). If the classification is "No e2e change," say so and no e2e
 runs — no ask needed.
+
+### REST `.http` files (`rest/`)
+
+`rest/*.http` are the git-native API request collection for the
+`humao.rest-client` VS Code extension — a **user-operated** debugging tool that
+fires this repo's routes against local / prod. This repo is opinionated toward
+keeping them current, so assess them like any other artifact. Grep `rest/` for the
+route(s) the todo's API surface touches (`app/api/**` handlers ↔ their
+`rest/<group>.http` request blocks), then classify:
+
+- **Updates an existing `.http`** — the todo changes a route a `rest/*.http` file
+  already exercises (its path, query/body params, or response shape). Name the
+  file and the request block(s) that must change. *This is the case that silently
+  outdates the request collection* — a route whose shape shifted leaves its
+  `.http` call wrong.
+- **Warrants a new `.http` request/file** — the todo adds a route not yet covered.
+  Add a request block to the right domain-grouped file (`rest/short-story.http`,
+  `rest/misc.http`, …) or a new `rest/<group>.http`; if `rest/` doesn't exist yet,
+  bootstrapping it counts. **Respect the read-only vs mutating split**: a
+  side-effectful / generation / LLM-spend route goes in the mutating set behind
+  the 🔴 do-not-auto-run header, never a read-only file.
+- **No `.http` change** — the todo touches no HTTP route (pure UI / lib / data /
+  tooling). Say WHY, so "no `.http`" is a recorded decision, not an oversight.
+
+**The `.http` suite is USER-ONLY — agents NEVER run it.** Authoring/updating the
+request text is in scope; **executing any `.http` request is not — not the
+read-only ones, not any of them, ever.** The human runs them in VS Code; an agent
+only keeps the files current. So this artifact is **write-only** at the gate: no
+run-permission ask (unlike e2e).
 
 ### Feature specs (`docs/features/`)
 
@@ -203,7 +233,34 @@ a picture and classify:
   data only), or an existing diagram still holds. Say WHY, so "no diagram" is a
   recorded decision, not an oversight.
 
-**Present ALL FIVE assessments — plus, for a bare invocation, the batch you're
+### Gaps check (what else this change must touch)
+
+Run the **`gaps-todo`** skill in **plan mode** on the todo + the approach: it
+walks the project's cross-cutting rules (staleness, delete cascades, sync,
+generation gates, …), the sibling features of the same kind, and every reader of
+a shape the todo changes, and asks of each whether this change must reach it —
+including EXISTING features whose behavior this change alters. Every gap it
+reports becomes a scope item at this gate: **build** it, or put it to the user
+as **not this run** with a destination. The failure this prevents (2026-10):
+full-body angles turned one body into three, but the frame's "Cast in this
+frame" picker still offered only portrait / full body — nobody could pick an
+angle, and nothing flagged it because no test or spec pointed at that modal.
+
+### Scope ledger (every item in the todo, accounted for)
+
+List EVERY item the todo asks for — numbered problems, checklist rows, "and
+also" clauses, the title's own promises — and mark each one **build** or
+**not this run**. An item the todo marks "needs a decision" is a human decision:
+put it to the user HERE, at this gate, never resolve it by quietly leaving it
+out. Every **not this run** item needs the user's explicit OK in this gate plus a
+named destination (another todo, a card, or "dropped"). The failure this
+prevents (learned hard, 2026-09): a todo titled "…leaves files behind in R2 AND
+in the render output" shipped only the R2 half; the renders item was recorded as
+out of scope in a spec's "known gaps" line and never put to the user, who found
+out weeks later. A narrowed scope that the user did not approve is a broken
+promise, however well it is documented.
+
+**Present ALL SIX assessments and the gaps check — plus, for a bare invocation, the batch you're
 about to build, and (when an e2e run is warranted) the up-front ask to run it as
 the last step — and WAIT for the user's go-ahead before touching code.** Their
 go-ahead authorizes the WHOLE run including the approved e2e; don't start the
@@ -299,6 +356,10 @@ problem). Rules:
   the file.
 - **Partially done** → leave the file; trim it to the remaining scope
   instead of deleting.
+- **Never retire an item by moving it** to another todo, a spec's "known
+  gaps", or a card unless the Step-1 scope ledger recorded that move with the
+  user's OK. Scope that turns out undeliverable mid-run is new ambiguity —
+  STOP and ask; don't narrow silently.
 - **Discussion/spike notes you didn't implement** stay untouched.
 
 **Write/update the feature spec(s) identified in Step 1** (`docs/features/`),
@@ -331,6 +392,23 @@ same commit as the feature spec:
   redraw what's still accurate.
 - Verify the linked path resolves and the SVG opens as a valid image.
 
+**Author/update the REST `.http` file(s) identified in Step 1** (`rest/`), in the
+same branch:
+
+- **New route** → add a request block to the right domain-grouped file
+  (`rest/short-story.http`, `rest/misc.http`, …) or a new `rest/<group>.http`,
+  following the `rest/README.md` conventions (`$shared` params like `{{slug}}`,
+  the local↔prod split, the CF Access headers for prod). A side-effectful /
+  generation / LLM-spend route goes in the mutating set under the 🔴
+  do-not-auto-run header, never a read-only file. If `rest/` doesn't exist yet,
+  bootstrapping the minimal structure counts.
+- **Changed route** → update the affected request block(s) (path, params, body)
+  to match what you built; leave still-accurate blocks alone.
+- **NEVER run any `.http` request** — not the read-only ones, not any of them.
+  The `.http` suite is a user-operated tool (the human fires it in VS Code); an
+  agent only keeps the files current. There is no "run the `.http`" step, ever —
+  this dovetails with the repo's "never regenerate autonomously" rule.
+
 **Write the CONTRACT tests identified in Step 1** per the repo convention
 (repository instructions' "Contract tests" section): `describe("CONTRACT: <the agreement in
 plain words>", …)`, placed FIRST in the test file (right after mocks/imports/
@@ -346,6 +424,11 @@ each contract to its feature spec's invariants section with the test path.
   identified in **Step 1** (new logic gets new tests; changed behavior gets its
   assertions updated). A new uncovered behavior shipping without the test Step 1
   called for is a miss — not "deferred".
+- **Gaps re-check** — run **`gaps-todo`** in **diff mode** on the FINISHED
+  diff (implementation often changes a rule or shape the plan didn't foresee).
+  Fix every gap inside the agreed scope; list any other under `## Gaps` in the
+  PR body with its recommendation and park a todo for it — never silently ship
+  past one.
 
 ## 5. Screenshot verification → OUTPUT_DIR (`zzz/`)
 
@@ -446,14 +529,26 @@ git -C /tmp/gist-pr<n> -c "credential.helper=!gh auth git-credential" push origi
 # ![label](https://gist.githubusercontent.com/<user>/<gist-id>/raw/<filename>)
 ```
 
+**Open the PR body with `## Not done from the todo`** — every **not this run**
+item from the Step-1 scope ledger, each with where it went and the user's OK
+(e.g. "renders → `render-download-store-to-r2.md`, agreed at the gate"). If the
+PR delivers everything, the section says so in one line ("Everything in the todo
+is done."). It goes FIRST, above the hero image, and the PR title must not
+promise more than was delivered. deliver-todo refuses to merge a PR without it.
+
+**Then `## Gaps`** — what the Step-4 `gaps-todo` re-check found outside the
+agreed scope, each with its recommendation (fix here / follow-up) and the todo
+it was parked as; or one line, "No gaps found." deliver-todo re-checks before
+merging.
+
 Always include in the PR body:
 - the key visual artifact itself (e.g. a generated thumbnail/render)
   as the hero image,
 - the verification states (in-progress, final, failure) — tables of
   2–3 images per row read well,
-- the **Step-1 assessment table** — one row per todo × the five artifacts
-  (unit/integration, e2e, feature spec, contracts, diagram), each cell the
-  classification + its one-line why, INCLUDING the "no change because …"
+- the **Step-1 assessment table** — one row per todo × the six artifacts
+  (unit/integration, e2e, REST `.http`, feature spec, contracts, diagram), each
+  cell the classification + its one-line why, INCLUDING the "no change because …"
   reasons. This is the durable record of what was deliberately tested,
   documented, and skipped — months later the PR itself answers "why is
   there no e2e for this?",

@@ -14,7 +14,8 @@ Each todo carries a YAML frontmatter block (the schema `add-todo` writes:
 `parent`). The **bundled** indexer reads it — use the script, do NOT hand-infer
 categories. It prints to stdout (read-only; writes no file), so just run it and
 present what it returns. Full view, or filtered by whatever the user asked for;
-filters are `status:` / `category:` / `priority:` / `tag:` / `kind:` / `parent:`,
+filters are `project:` / `status:` / `category:` / `priority:` / `tag:` / `kind:` /
+`parent:`,
 AND-combined:
 
 ```bash
@@ -23,6 +24,7 @@ node "$TODO_INDEXER"                                                         # e
 node "$TODO_INDEXER" --list status:ready                                     # buildable now
 node "$TODO_INDEXER" --list status:ready tag:short-story
 node "$TODO_INDEXER" --list category:bug priority:high
+node "$TODO_INDEXER" --list project:comedy-ocean                             # one project's backlog
 node "$TODO_INDEXER" --list kind:index                                      # just the initiatives
 node "$TODO_INDEXER" --list parent:online-video-architecture-index          # one initiative's children
 ```

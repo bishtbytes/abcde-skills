@@ -45,6 +45,24 @@ or delete, `develop`/`main`.
      intended?" Yes → proceed; no → hold the merge so the spec can land on
      the branch first. A nudge, never a hard block — and skip the ask when
      the PR is docs-only or already MERGED.
+   - **Scope check — a HARD block, not a nudge.** Read the PR body's
+     `## Not done from the todo` section. Missing → STOP: the PR can't be
+     merged until it says what, if anything, it left out (check the todo it
+     retired: `git show <first-parent>:docs/todo/<slug>.md`). Present →
+     show the user every item listed and ask for an explicit yes to merge
+     with those left out. Only "Everything in the todo is done." skips the
+     ask. A dropped item the user never heard about is the failure this
+     guards (see code-todo's Step-1 scope ledger).
+   - **Gaps check — the user picks, you recommend.** Skip when the PR is
+     already MERGED or docs-only. Otherwise run the **`gaps-todo`** skill in
+     diff mode on the PR. No gaps → proceed. Gaps → show them and ask ONE
+     question: **merge now and take the gaps as a follow-up**, or **fix them on
+     this branch first** — with your recommendation and why (fix first when a
+     gap gives wrong behavior on a path this PR ships; follow-up when the
+     shipped path is right and the gap is an edge, a sibling not reached yet,
+     or polish). Follow-up → park each gap as a todo (`add-todo`), note them in
+     the final summary, then merge. Fix first → STOP the delivery here; the fix
+     lands on the branch and deliver-todo runs again.
    - **OPEN + mergeable** → `gh pr merge <#> --merge` (merge commit — **no
      squash, no rebase**).
    - **OPEN + not mergeable** (conflicts / failing checks / changes requested) →
@@ -73,7 +91,7 @@ or delete, `develop`/`main`.
 
 Merged to develop on $(date +%F)
 $sha"
-     git -C <main> push origin "$tag"        # tolerate "already exists"
+     git -C <main> push --no-verify origin "$tag"   # tolerate "already exists"
    fi
    ```
    The annotated tag carries its own date, so later you get newest-first merge
@@ -109,8 +127,21 @@ $sha"
 7. **Delete the branch — local + origin.**
    - `git -C <main> branch -D <branch>` (`-D`: it's merged via the PR, which may
      not be in the *local* develop's history yet).
-   - `git -C <main> push origin --delete <branch>` — tolerate "remote ref does
-     not exist" (GitHub auto-deletes on merge for some repos).
+   - `git -C <main> push --no-verify origin --delete <branch>` — tolerate
+     "remote ref does not exist" (GitHub auto-deletes on merge for some repos).
+
+   **`--no-verify` on BOTH pushes in this skill (the tag in step 3 and this
+   delete) is load-bearing.** A tag or delete push still fires the repo's
+   pre-push hook, which may run the full test suite — from the main checkout,
+   after the worktree is gone. A red or flaky suite (or a hook that refuses)
+   then blocks the delete, and "tolerate" swallowed that silently: merged
+   branches piled up on origin while every run reported success. These pushes
+   carry no code, so the gate has nothing to check.
+
+   **Then VERIFY the origin branch is gone — never assume it.**
+   `git -C <main> ls-remote --exit-code --heads origin <branch>`: exit 2 means
+   gone; exit 0 means the delete did not land → say so loudly in the step 9
+   report ("origin branch NOT deleted: <reason>"), never report it as removed.
 
 8. **Pull develop (FF-only).** `git -C <main> fetch origin develop`. Then:
    - If the main checkout is **on** `develop`: if its tree is dirty,
@@ -124,7 +155,8 @@ $sha"
 9. **Report the work summary.** List the commits that landed on develop from this
    branch (the pushed set from step 2, or `git log --oneline <merge-base>..<tip>`)
    so the user sees exactly what shipped. Confirm: PR # merged, worktree removed,
-   branch gone (local + origin), local develop at `<sha>`.
+   branch gone (local + origin — the origin half as VERIFIED in step 7, never
+   assumed), local develop at `<sha>`.
 
 ## 10. Tech-debt follow-up PR (optional — always ask first)
 
@@ -143,16 +175,79 @@ succeeded; this is a bonus, so a decline costs nothing.
    node scripts/debt-report.mjs --paths <touched files> --top 10 --json
    ```
    It scores each file/folder by hotspot (severity × recent churn) against the
-   betterer baselines (file-size / complexity / layer-boundary).
+   betterer baselines (file-size / complexity / layer-boundary) AND — when knip is
+   wired — each file's unused exports/types, so "delete N unused exports" shows up
+   as a ranked increment on the touched surface.
 
-2. **Propose a bounded batch and ASK.** Present the top 1–3 files worth chipping,
-   each with ONE concrete, behavior-preserving increment — the *next coherent
-   slice* toward its target structure (e.g. "extract the image-status helpers out
-   of `frame-ops.ts` into `frame/image-status.ts`"), NOT "fully fix it". Then STOP
-   and ask whether to build it. Nothing in scope / no scanner / user declines →
-   say so; you're done.
+   **Whole-repo dead-code delta (only if `scripts/knip/ratchet.mjs` ships; skip
+   silently otherwise).** Touched-file ranking above is blind to the commonest
+   dead code a feature creates: an export goes dead because the feature deleted
+   its *last consumer* in a DIFFERENT file. Catch it by running the ratchet
+   whole-repo from `<main>` on develop now that the merge has landed:
+   ```bash
+   node scripts/knip/ratchet.mjs --check   # fails + lists NEW dead exports/types vs baseline
+   ```
+   Any entries it prints are symbols this feature orphaned *anywhere* in the tree
+   — fold them into the proposal below as their own increment ("this PR left
+   `<name>` dead in `<file>` — delete"). (A plain `node scripts/knip/ratchet.mjs`
+   run also auto-lowers the baseline when the feature REMOVED dead code — commit
+   the lowered `scripts/knip/baseline.json` with the tech-debt PR.)
 
-3. **Build it (only on yes).** Build in an **isolated worktree off develop**
+2. **Judge the touched surface against the refactoring rubric (subagent).** The
+   scanner in step 1 sees SIZE + churn only; it can't see DESIGN debt — a 300-line
+   function doing six things, logic tangled with I/O, a god-object prop bag, a
+   deeply-nested closure buried in the render. So spawn ONE subagent to READ the
+   touched code files and judge them against the rubric below, returning concrete,
+   principle-cited findings. This is the signal for **WHAT** to fix; the scanner
+   only ranks **WHERE** it hurts. Skip only when no code files were touched.
+
+   Hand the subagent the touched-file list + this rubric verbatim, and require
+   **structured findings**, most-severe first — each:
+   `{ file, principle, severity (high|med|low), what (the smell + its exact
+   location, e.g. the function/block name + line), fix (the concrete extraction /
+   split), residual (projected file size + what's still oversized after) }`.
+
+   **Refactoring rubric — universal, no framework/repo specifics** (judge every
+   file against these; the subagent cites only the ones a file actually violates):
+   - **Single responsibility** — a unit has ONE reason to change; a function or
+     module doing N unrelated things is N units in a trenchcoat → split.
+   - **Size is the pointer, not the disease** — a long function / oversized file is
+     usually several responsibilities fused. Name the specific offending
+     function/block and the seam, never just "the file is big".
+   - **Functional core, imperative shell** — pure logic (decisions, data-shaping,
+     formatting) lives in pure, testable functions, separated from I/O (network,
+     disk, DB, DOM, framework lifecycle).
+   - **Cohesion & coupling** — things that change together belong together; a wide
+     parameter list or a god-object threaded everywhere is a missing abstraction.
+   - **Dependency direction** — dependencies point one way (toward stable / lower
+     layers); lower layers never reach up into higher ones.
+   - **Readable control flow** — early returns over deep nesting; no logic-bearing
+     closures buried inside other expressions (callbacks, IIFEs, template/JSX).
+   - **Name honestly; don't repeat** — names state intent; duplicated knowledge
+     gets one home (within reason — a little duplication beats a wrong abstraction).
+   - **Handle failure at the seams** — errors handled at boundaries, not swallowed
+     mid-logic.
+   - **A new capability is a new module behind a seam** — never a bigger file or a
+     new prefix-sibling bolted onto an already-large unit.
+
+3. **Propose a bounded batch and ASK.** Cross the judge's findings (WHAT) with the
+   scanner's hotspot rank (WHERE) and present the top 1–3 increments — each:
+   - **naming the specific unit** to extract (the function / closure / block /
+     inline data structure), NOT "a cohesive cluster" — e.g. *"extract the 300-line
+     `renderRow` closure into `ChecklistRow`"*, not *"extract something from
+     OutlineChecklist"*;
+   - stating the **projected residual** — the file's size + any unit still over
+     target AFTER the slice (*"→ 253 lines, no unit >400 left"*). A slice that
+     leaves the file's LARGEST unit / worst smell in place is **not** the primary
+     increment — never propose extracting a peripheral, already-clean chunk to
+     dodge the hard one (that's the trap: it moves lines without removing the debt);
+   - behavior-preserving (a `git mv` / extract / split / simplify) — the next
+     coherent slice toward the target structure, NOT "fully fix it".
+
+   Then STOP and ask whether to build it. Nothing in scope / no code touched / user
+   declines → say so; you're done.
+
+4. **Build it (only on yes).** Build in an **isolated worktree off develop**
    (like code-todo — isolation; never build in the main checkout, whose running
    dev server / uncommitted work you'd otherwise risk), set up via
    `./scripts/start-dev.sh`:
@@ -181,7 +276,7 @@ succeeded; this is a bonus, so a decline costs nothing.
      worktree — the depth trap), then confirm `pnpm betterer:ci` green. betterer
      is not a pre-push gate, so this hand-verify is the only check on it.
 
-4. **Open the PR + clean up.** From the worktree,
+5. **Open the PR + clean up.** From the worktree,
    `git push -u origin feat/<slug>-techdebt`, then
    `gh pr create --base develop --title "Tech debt: <what>"` with a body listing
    each increment (+ the betterer baseline drop when one happened, else the
