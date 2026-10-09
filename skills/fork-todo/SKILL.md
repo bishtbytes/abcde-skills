@@ -1,7 +1,6 @@
 ---
 name: fork-todo
 description: Use when work decided in THIS conversation should be built by a different agent right now, while you keep talking here. Captures the in-flight task as a self-contained spec written to the OS temp directory (never the repo, never a session scratchpad), prints its absolute path, and hands it to a FRESH SEPARATE SESSION — never a background subagent, never anything running inside this session — with collision rules so both sides can run at once. Triggers on "fork this work", "hand this to another agent", "someone else build this while we keep going", "/fork-todo".
-argument-hint: "What to hand off (optional — defaults to the task under discussion)"
 ---
 
 Take the task this conversation just settled, write it down so it survives

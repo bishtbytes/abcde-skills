@@ -1,7 +1,6 @@
 ---
 name: gaps-todo
 description: Check a change for GAPS — places it should have affected but didn't. Walks the project's cross-cutting rules (staleness, delete cascades, sync, generation gates, …) asking for each whether the NEW thing follows the rule and whether the change alters the rule for EXISTING features; then checks sibling features of the same kind, every reader of a changed data shape, the tests/specs/contracts that should move in lockstep, and the promised scope. Read-only: reports each finding as gap or fine-because, with a recommendation, and never fixes on its own. Runs standalone on a PR or branch ("/gaps-todo 1072", "/gaps-todo"), and is called by code-todo (on the plan before coding, and on the finished diff before the PR) and by deliver-todo (before the merge). Triggers on "/gaps-todo", "check this PR for gaps", "did we miss anything", "what else does this change affect".
-argument-hint: "(optional) a PR number or branch — defaults to the current branch's PR, else its diff against develop"
 ---
 
 # gaps-todo — what did this change forget to touch?
@@ -46,8 +45,8 @@ actually is, as facts the rules can match against:
 
 ## 3. Walk the cross-cutting rules (the core check)
 
-Load the project's **rules catalog**: the path named in the repo's CLAUDE.md
-"Cross-cutting rules" section, else `docs/features/cross-cutting-rules.md`. Each
+Load the project's **rules catalog**: the path named in the repository instructions'
+(`AGENTS.md` / `CLAUDE.md`) "Cross-cutting rules" section, else `docs/features/cross-cutting-rules.md`. Each
 rule lists its triggers, the siblings that already follow it, where it is
 defined, and its classic miss.
 
