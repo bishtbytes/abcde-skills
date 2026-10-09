@@ -1,6 +1,6 @@
 ---
 name: brainstorm-todo
-description: Use right after a todo is parked (by add-todo, or on any existing todo doc) to interrogate and RESOLVE its open questions — the scope choices, undecided options, edge cases, and behavior/contract calls that weren't settled when it was captured. Interviews the user relentlessly to resolve them, folds every answer back INTO the todo doc, then puts the resolved doc in front of a five-advisor council that reads it from five different angles and reports what gaps are left — nothing is marked ready until that council clears it. Triggers on "/brainstorm-todo", "resolve the open questions", "grill me on this todo", "council this todo", and is auto-chained by add-todo when a freshly-parked todo still has unresolved questions. The B in the add → brainstorm → code → deliver flow; it closes gaps in an ALREADY-parked todo.
+description: Use right after a todo is parked (by add-todo, or on any existing todo doc) to interrogate and RESOLVE its open questions — the scope choices, undecided options, edge cases, and behavior/contract calls that weren't settled when it was captured. Interviews the user relentlessly to resolve them, folds every answer back INTO the todo doc, then puts the resolved doc in front of a five-advisor council that reads it from five different angles and reports what gaps are left — nothing is marked ready until that council clears it. Triggers on "/brainstorm-todo", "resolve the open questions", "grill me on this todo", "council this todo", and is offered by add-todo (via a yes/no prompt) right after a todo is parked. The B in the add → brainstorm → code → deliver flow; it closes gaps in an ALREADY-parked todo.
 ---
 
 # brainstorm-todo — resolve a parked todo's open questions
@@ -12,7 +12,8 @@ list, "TBD"). This skill closes those gaps by interviewing you, then writes the
 resolutions back into the doc so the next reader — or `code-todo` — picks up a
 settled spec, not a question pile.
 
-Runs **on one target todo** — the one `add-todo` just wrote (auto-chain), or a
+Runs **on one target todo** — the one `add-todo` just wrote (when you accept its
+prompt), or a
 `docs/todo/<slug>.md` you name.
 
 ## 1. Read the todo and find the gaps
@@ -163,10 +164,13 @@ Docs-only change → land it on `develop` immediately so other sessions pick it 
 This **overrides the global "don't push" Push Rule** — todo docs are meant to land
 on `develop` right away.
 
-## When auto-chained by add-todo
+## When invoked right after add-todo
 
-`add-todo` invokes this automatically **only when the freshly-parked todo still
-has open questions** (see its final step). In that case the target is the todo
-just written; run Steps 1–5 straight through. If `add-todo` already decided there
-were no open questions, this skill isn't invoked at all — and no todo reaches
-`ready` without Step 4, since that flip only ever happens inside this skill.
+`add-todo` no longer auto-chains into this skill — it **prompts** the user first
+(park fast; leave the time-consuming gap check behind a choice). So this skill
+runs here only when the user **accepts that prompt** (or invokes it directly). In
+that case the target is the todo just written; run Steps 1–5 straight through.
+
+Note what that implies: a todo parked without accepting the prompt never sees the
+council, and never reaches `ready` either — the flip only ever happens in Step 4.
+Declining the prompt defers the gap check, it doesn't skip it.
