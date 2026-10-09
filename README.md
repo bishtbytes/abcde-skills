@@ -21,10 +21,11 @@ Todos aren't a scratch list here — they're **self-contained spec docs** that a
 
 ### Also included
 
-One skill that isn't part of the lifecycle and carries no letter:
+Skills that aren't steps of the lifecycle and carry no letter:
 
 | Skill | What it does |
 |---|---|
+| `gaps-todo` | Checks a change for what it forgot to touch: walks the project's cross-cutting rules (staleness, delete cascades, sync, …) and asks whether the new thing follows each one and whether existing features must change because of it; then sibling features, readers of changed data shapes, and the tests/specs that should move with it. Read-only — reports gaps with a recommendation. Runs standalone on a PR, and inside `code-todo` (plan + finished diff) and `deliver-todo` (before the merge). Expects a rules catalog — see CONVENTIONS.md "Cross-cutting rules". |
 | `plain-language` | Rewrites the previous answer in plain everyday language with no analogies, then holds that register for the rest of the session. For when a design discussion has drifted into jargon and you want the thread readable again. |
 
 ## Install

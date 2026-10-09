@@ -54,6 +54,16 @@ or delete, `develop`/`main`.
      with those left out. Only "Everything in the todo is done." skips the
      ask. A dropped item the user never heard about is the failure this
      guards (see code-todo's Step-1 scope ledger).
+   - **Gaps check — the user picks, you recommend.** Skip when the PR is
+     already MERGED or docs-only. Otherwise run the **`gaps-todo`** skill in
+     diff mode on the PR. No gaps → proceed. Gaps → show them and ask ONE
+     question: **merge now and take the gaps as a follow-up**, or **fix them on
+     this branch first** — with your recommendation and why (fix first when a
+     gap gives wrong behavior on a path this PR ships; follow-up when the
+     shipped path is right and the gap is an edge, a sibling not reached yet,
+     or polish). Follow-up → park each gap as a todo (`add-todo`), note them in
+     the final summary, then merge. Fix first → STOP the delivery here; the fix
+     lands on the branch and deliver-todo runs again.
    - **OPEN + mergeable** → `gh pr merge <#> --merge` (merge commit — **no
      squash, no rebase**).
    - **OPEN + not mergeable** (conflicts / failing checks / changes requested) →
