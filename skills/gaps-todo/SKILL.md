@@ -42,6 +42,12 @@ actually is, as facts the rules can match against:
 - **Changed shapes:** a field gains values, one thing becomes several, a derived
   value becomes stored (or the reverse), a meaning shifts, a key is renamed.
 - **Removed things.**
+- **Where and when it runs** — the one fact every finding is judged against.
+  Name the user flow and the moment: which screen or step, before or after
+  what, triggered by whom (e.g. "only in the new-story setup chat, before
+  writing starts — the studio panels aren't on screen"). A gap the user can't
+  reach from there is not a bug in this change, however real the code path.
+  Get it from the spec and the PR body; if you can't tell, ask before judging.
 
 ## 3. Walk the cross-cutting rules (the core check)
 
@@ -112,6 +118,24 @@ at — a vague "might also need updating" is noise, and noise trains people to
 skip this report. For a large change, fan out one subagent per rule group and
 verify their findings yourself before reporting.
 
+**"Reached" means a USER can get there, not that the code can call it.** Walk
+each surviving gap through the "where and when it runs" fact from step 2 and
+put it in one of three classes, naming the condition:
+
+- **Reachable in the shipped flow** — the normal use of this change hits it.
+- **Reachable only from another feature or a later flow** — e.g. a studio
+  button used on the new data long after this flow ended; a server restart in
+  a seconds-long window; a second tab open on the same story.
+- **Not reachable today** — the only reader is gated off, or the path needs
+  something this change doesn't ship yet.
+
+Judge the worst case only AFTER the class: a reviewer's "orphaned file / double
+charge" is the worst case of a path, not proof anyone walks it. When fanning
+out, hand each subagent the "where and when it runs" line and ask for the
+class with each finding — and never seed a suspected finding in its prompt
+("check whether X breaks"): a seeded suspicion comes back as a finding and
+gets weighed as if it had been found.
+
 ## 8. Report
 
 Lead with the count, then the gaps, most serious first. Each gap:
@@ -120,13 +144,18 @@ Lead with the count, then the gaps, most serious first. Each gap:
 - **Where** — the file:line link of the untouched place.
 - **Why it matters** — the concrete wrong outcome (the user sees X, data Y is
   lost, Z gets charged twice).
+- **Reachable** — its class from step 7, with the condition in plain words
+  ("only if the server restarts while the job is queued").
 - **Recommend:** **fix in this PR** or **follow-up todo**, and why.
 
-Recommend **fix in this PR** when the gap gives wrong behavior on a path the
-change ships (wrong data, lost work, wrong spend, a broken contract, a control
-that now lies). Recommend **follow-up** when the shipped path is right and the
-gap is an edge that can't happen yet, a sibling the change doesn't reach today,
-or polish.
+Lead the count split by class ("3 gaps reachable in this flow, 5 only from
+later flows, 2 not reachable today"). Recommend **fix in this PR** only for a
+gap that is **reachable in the shipped flow** AND gives wrong behavior there
+(wrong data, lost work, wrong spend, a broken contract, a control that now
+lies). Everything else — reachable only from another feature or a later flow,
+not reachable today, or polish — is a **follow-up**, however bad its worst
+case reads; say what would make it urgent (e.g. "becomes fix-now once imports
+are allowed after writing").
 
 Then one compact list of what was checked and found **fine**, each with its
 because — so the user can see the rule was considered, not forgotten. Keep it
