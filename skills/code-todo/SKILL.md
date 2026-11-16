@@ -1,6 +1,6 @@
 ---
 name: code-todo
-description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across six artifacts — unit/integration (vitest), e2e, the REST `.http` request collection in rest/, the living feature specs in docs/features/, behavioral contracts, and applicable diagrams in docs/diagrams/ — naming which existing ones need updating, where new ones are warranted, or no change (with why); when an e2e run is warranted it ALSO asks up front, at the same gate, for permission to run it as the last step, so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, the approved e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
+description: Implement one or more tasks/todos for this repo end-to-end — isolated worktree off develop, implementation, gates, live screenshot verification into zzz/ (OUTPUT_DIR, never git), and a PR against develop with the screenshots attached. Before implementing (EVERY invocation, including a named todo) it presents a test & spec impact assessment across six artifacts — unit/integration (vitest), e2e, the REST `.http` request collection in rest/, the living feature specs in docs/features/, behavioral contracts, and applicable diagrams in docs/diagrams/ — naming which existing ones need updating, where new ones are warranted, or no change (with why); the contract tests + spec invariants it identifies are written/updated automatically, and when an e2e is applicable it RUNS automatically as the last step — no permission ask — so every human decision is resolved before any code and the run then proceeds autonomously to completion (implementation, gates, screenshots, contracts, the applicable e2e, PR) with no further check-ins. Tech-debt cleanup is not part of this skill — it runs as a follow-up PR in deliver-todo. Waits for go-ahead before touching code. Use when the user says "/code-todo", "implement this todo", or hands over a spec/task to build as a PR. When invoked with NO specific todo, first triages docs/todo/ into ready-vs-needs-discussion lists and asks which to build.
 ---
 
 # code-todo
@@ -37,7 +37,7 @@ Rules for the stack:
   targets `develop`.
 - **Every PR still runs the full per-PR flow** — its own Step 1 gate (resolve
   that PR's open questions + e2e/spec impact), implement, gates, screenshots,
-  approved e2e, PR. Resolve each PR's human decisions up front in the plan table /
+  applicable e2e, PR. Resolve each PR's human decisions up front in the plan table /
   gate; hold a todo OUT of the auto-stack if it still has an open design question.
 - **Warn once about the rebase cascade:** changes requested on a lower PR mean
   rebasing every PR above it.
@@ -48,13 +48,14 @@ Rules for the stack:
 
 The Step 1 go-ahead gate is the ONLY place this skill stops for the user. By the
 time the user says go, EVERY decision that needs them must be on the table and
-resolved — scope, the test/spec impact across all three artifacts, **AND whether
-the work warrants an end-of-run e2e (and if so, permission to run it).** After
-go-ahead the run proceeds to completion on its own, following the agreed process
-— implementation, gates, screenshots, the approved e2e, and the PR — with NO
-further check-ins. The failure this prevents: returning to a session to find the
-work shipped but a process step (e.g. the e2e) silently skipped because its
-permission was never asked. Ask once, up front; then finish the job.
+resolved — scope and the test/spec impact across all six artifacts. **Updating
+contracts and running the applicable e2e are NOT decisions — they are standard
+steps that always happen, with no ask.** After go-ahead the run proceeds to
+completion on its own, following the agreed process — implementation, contract
+tests + spec invariants, gates, screenshots, the applicable e2e, and the PR —
+with NO further check-ins. The failure this prevents: returning to a session to
+find the work shipped but a process step (contracts, the e2e) skipped or held
+back waiting for a prompt. Ask once, up front; then finish the job.
 
 Tech-debt cleanup is deliberately NOT part of this skill — it runs as a
 follow-up PR in **deliver-todo**, scoped to the just-merged feature's touched
@@ -139,13 +140,12 @@ Grep `e2e/` for the surfaces / testids / flows the todo touches, then classify:
 - **No e2e change** — internal / non-UI, or UI but adequately unit-covered.
   Say WHY, so "no e2e" is a recorded decision, not an oversight.
 
-**When an e2e run is warranted ("Updates an existing e2e" or "Warrants a new /
-extended e2e"), ask for permission to run it as the last step NOW — fold that
-ask into this same go-ahead.** Don't defer the e2e permission to the end of the
-run: resolving it here is the whole point — the run is autonomous after
-go-ahead, so an unasked end-step silently drops (the exact gap this skill
-exists to close). If the classification is "No e2e change," say so and no e2e
-runs — no ask needed.
+**When an e2e is applicable ("Updates an existing e2e" or "Warrants a new /
+extended e2e"), it RUNS automatically as the last step (Step 6) — do NOT ask
+for permission, not at the gate and not at the end.** Just state in the
+assessment which spec(s) will run. Only skip the run if the user explicitly
+opts out unprompted. If the classification is "No e2e change," say so and no
+e2e runs.
 
 ### REST `.http` files (`rest/`)
 
@@ -174,7 +174,7 @@ route(s) the todo's API surface touches (`app/api/**` handlers ↔ their
 request text is in scope; **executing any `.http` request is not — not the
 read-only ones, not any of them, ever.** The human runs them in VS Code; an agent
 only keeps the files current. So this artifact is **write-only** at the gate: no
-run-permission ask (unlike e2e).
+run step at all (the e2e runs; `.http` requests never do).
 
 ### Feature specs (`docs/features/`)
 
@@ -215,6 +215,14 @@ above, then classify:
   section (they cross-link: spec lists the contract + its test path).
 - **No contract impact** — say WHY (pure refactor behind green contract tests,
   UI copy, docs/data only).
+
+**Contract updates are automatic — no ask.** Writing a new CONTRACT test,
+adding an unprotected contract's test, extending an existing CONTRACT test to
+cover the new behavior, and the matching spec-invariants lines all happen in
+Step 3 without a prompt. The ONE exception is the repo rule: **weakening,
+skipping, or deleting** an existing CONTRACT test (because the change falsifies
+the agreement) needs the user's explicit approval — name that contract and its
+replacement at this gate, never mid-run.
 
 ### Diagrams (`docs/diagrams/`)
 
@@ -261,18 +269,18 @@ out weeks later. A narrowed scope that the user did not approve is a broken
 promise, however well it is documented.
 
 **Present ALL SIX assessments and the gaps check — plus, for a bare invocation, the batch you're
-about to build, and (when an e2e run is warranted) the up-front ask to run it as
-the last step — and WAIT for the user's go-ahead before touching code.** Their
-go-ahead authorizes the WHOLE run including the approved e2e; don't start the
-worktree or implementation until they confirm, and don't stop to re-ask
-afterwards.
+about to build, and (when an e2e is applicable) which spec(s) will run as the
+last step — and WAIT for the user's go-ahead before touching code.** Their
+go-ahead authorizes the WHOLE run including the contract updates and the
+applicable e2e (neither is a separate ask); don't start the worktree or
+implementation until they confirm, and don't stop to re-ask afterwards.
 
 Scope note: this step only DECIDES the work. The unit/integration tests, the
 CONTRACT tests, and the feature-spec writes/updates identified here happen
 **during implementation** (Step 3); the tests then run inline in **Step 4
 (Gates)**. Author/update the e2e
 spec during implementation too; the e2e itself RUNS as the **LAST** step (Step 6)
-when it was approved up front in this gate — autonomously, no second ask. This
+whenever it is applicable — autonomously, no ask. This
 skill already works in its own isolated worktree (own port, own working tree),
 so the e2e's spawned dev server + file churn can't touch the user's running app
 or in-flight work.
@@ -409,7 +417,7 @@ same branch:
   agent only keeps the files current. There is no "run the `.http`" step, ever —
   this dovetails with the repo's "never regenerate autonomously" rule.
 
-**Write the CONTRACT tests identified in Step 1** per the repo convention
+**Write/update the CONTRACT tests identified in Step 1 — automatically, no ask** — per the repo convention
 (repository instructions' "Contract tests" section): `describe("CONTRACT: <the agreement in
 plain words>", …)`, placed FIRST in the test file (right after mocks/imports/
 fixtures, before any other describe), asserting through the public seam. Add
@@ -462,12 +470,12 @@ Revert any content side-effects the live test left in the worktree
 (story.json edits, `*-status.json` files) before committing, and stop
 the dev server when done.
 
-## 6. E2E run — the last verification (only when approved in Step 1)
+## 6. E2E run — the last verification (automatic whenever applicable)
 
-If Step 1 classified the work as warranting an e2e and the user approved running
-it at the go-ahead gate, run it now — the **LAST** step before the PR, after
-every cheap gate (Step 4) and the screenshots (Step 5) are green. This runs
-**autonomously** (the permission was obtained up front); do NOT stop to re-ask.
+If Step 1 classified the work as warranting an e2e ("Updates an existing e2e" /
+"Warrants a new / extended e2e"), run it now — the **LAST** step before the PR,
+after every cheap gate (Step 4) and the screenshots (Step 5) are green. This
+runs **autonomously** — it is a standard step, not a permission; do NOT ask.
 
 - **Run in THIS worktree, on a free port** (see **Port selection** in Step 2 —
   pick the first free port in 11000–12000; never 3333 / 3366 / 3399). It already
@@ -480,9 +488,9 @@ every cheap gate (Step 4) and the screenshots (Step 5) are green. This runs
   **per-spec** result (passed / flake-retried-then-passed / failing trace) for
   the PR-body status table (Step 7).
 - **"No e2e change"** (Step 1) → skip this step entirely.
-- **User declined the e2e at the gate** → skip the RUN, but still author/update
-  the spec (Step 3) so the coverage lands with the change, and note in the PR
-  that the e2e was authored but, by request, not run.
+- **User explicitly opted out (unprompted)** → skip the RUN, but still
+  author/update the spec (Step 3) so the coverage lands with the change, and
+  note in the PR that the e2e was authored but, by request, not run.
 
 ## 7. ONE PR against develop — with screenshots attached
 
